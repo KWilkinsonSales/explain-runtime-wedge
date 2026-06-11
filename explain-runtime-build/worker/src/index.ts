@@ -25,6 +25,14 @@ function token(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function parseJsonOrRaw(text: string): Json {
+  try {
+    return JSON.parse(text) as Json;
+  } catch {
+    return { raw: text };
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { headers: cors(env) });
@@ -39,7 +47,7 @@ export default {
         const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
         await env.DB.prepare(`INSERT INTO invitations
           (token, mission_type, mission_version, recipient_display_name, role_or_context, approved_context, status, created_at, expires_at)
-          VALUES (?, ?, ?, ?, ?, ?, 'WAITING', datetime('now'), ?)`)
+          VALUES (?, ?, ?, ?, ?, ?, 'WAITING', datetime('now'), ?)`) 
           .bind(
             inviteToken,
             body.missionType ?? "explain_adl",
@@ -64,20 +72,69 @@ export default {
         const invite = await env.DB.prepare("SELECT * FROM invitations WHERE token = ?").bind(inviteToken).first();
         if (!invite) return json({ error: "invalid_token" }, 404, cors(env));
         if (invite.status === "CLOSED") return json({ error: "mission_closed" }, 409, cors(env));
+
         const model = env.OPENAI_REALTIME_MODEL ?? "gpt-realtime";
-        const upstream = await fetch("https://api.openai.com/v1/realtime/sessions", {
+        const upstream = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${env.OPENAI_API_KEY}`,
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ model, modalities: ["audio", "text"] })
+          body: JSON.stringify({
+            session: {
+              type: "realtime",
+              model,
+              audio: {
+                output: {
+                  voice: "marin"
+                }
+              },
+              instructions: "You are Kellen's bounded Founder Envoy. Use natural conversational speech."
+            }
+          })
         });
-        const payload = await upstream.json<Json>();
-        if (!upstream.ok) return json({ error: "realtime_session_failed", detail: payload }, 502, cors(env));
+
+        const upstreamText = await upstream.text();
+        const payload = parseJsonOrRaw(upstreamText);
+        const requestId = upstream.headers.get("x-request-id");
+
+        if (!upstream.ok) {
+          const headers: HeadersInit = cors(env);
+          if (requestId) headers["x-openai-request-id"] = requestId;
+          return json({
+            error: "realtime_session_failed",
+            upstreamStatus: upstream.status,
+            detail: payload
+          }, upstream.status, headers);
+        }
+
+        const clientSecret =
+          typeof payload.value === "string"
+            ? payload.value
+            : typeof payload.client_secret === "object" &&
+                payload.client_secret !== null &&
+                "value" in payload.client_secret
+              ? String((payload.client_secret as { value: unknown }).value)
+              : null;
+
+        if (!clientSecret) {
+          const headers: HeadersInit = cors(env);
+          if (requestId) headers["x-openai-request-id"] = requestId;
+          return json({
+            error: "missing_realtime_client_secret",
+            detail: payload
+          }, 502, headers);
+        }
+
         await env.DB.prepare("UPDATE invitations SET status = 'RUNNING', opened_at = COALESCE(opened_at, datetime('now')) WHERE token = ? AND status = 'WAITING'")
           .bind(inviteToken).run();
-        return json({ ...payload, model }, 200, cors(env));
+
+        const headers: HeadersInit = cors(env);
+        if (requestId) headers["x-openai-request-id"] = requestId;
+        return json({
+          client_secret: { value: clientSecret },
+          model
+        }, 200, headers);
       }
 
       if (request.method === "POST" && parts[0] === "api" && parts[1] === "missions" && parts[2] && parts[3] === "state") {
