@@ -11,6 +11,9 @@ export interface RealtimeConnection {
   stop: () => void;
 }
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "")
+  ?? "https://explain-runtime-api.explain.workers.dev";
+
 export async function connectRealtimeVoice(
   token: string,
   state: RuntimeState,
@@ -19,7 +22,7 @@ export async function connectRealtimeVoice(
 ): Promise<RealtimeConnection> {
   state.voice.connectionStatus = "connecting";
 
-  const bootstrapResponse = await fetch(`/api/realtime/session?token=${encodeURIComponent(token)}`, {
+  const bootstrapResponse = await fetch(`${API_BASE}/api/realtime/session?token=${encodeURIComponent(token)}`, {
     method: "POST"
   });
   if (!bootstrapResponse.ok) {
