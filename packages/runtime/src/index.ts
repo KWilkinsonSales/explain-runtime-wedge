@@ -5,4 +5,8 @@ export * from "./kernel/step.js";
 export * from "./kernel/types.js";
 export * from "./lens-manifest/types.js";
 export * from "./primitives/types.js";
+export * from "./receipts/emitter.js";
+export * from "./receipts/types.js";
+export * from "./replay/digest.js";
+export * from "./replay/replay.js";
 export * from "./room-contract/types.js";
