@@ -51,13 +51,26 @@ export type RuntimeEventPayloadByKind = {
   };
 };
 
-export type KernelEventEnvelope<K extends RuntimeEventKind = RuntimeEventKind> = {
-  readonly envelopeVersion: EnvelopeVersion;
-  readonly eventId: string;
-  readonly occurredAt: string;
-  readonly roomId?: RoomId;
-  readonly actor?: RuntimeActor;
-  readonly kind: K;
-  readonly payload: RuntimeEventPayloadByKind[K];
-  readonly causality?: RuntimeCausality;
+type KernelEventEnvelopeByKind = {
+  readonly [K in RuntimeEventKind]: {
+    readonly envelopeVersion: EnvelopeVersion;
+    readonly eventId: string;
+    readonly occurredAt: string;
+    readonly roomId?: RoomId;
+    readonly actor?: RuntimeActor;
+    readonly kind: K;
+    readonly payload: RuntimeEventPayloadByKind[K];
+    readonly causality?: RuntimeCausality;
+  };
 };
+
+export type KernelEventEnvelope = KernelEventEnvelopeByKind[RuntimeEventKind];
+
+export type EnvelopeCoverageAssertion =
+  RuntimeEventKind extends KernelEventEnvelope["kind"]
+    ? KernelEventEnvelope["kind"] extends RuntimeEventKind
+      ? true
+      : never
+    : never;
+
+export const envelopeCoverageAssertion: EnvelopeCoverageAssertion = true;
