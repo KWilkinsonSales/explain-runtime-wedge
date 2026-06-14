@@ -2,5 +2,15 @@
   "name": "@adl/harness-cli",
   "version": "0.1.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "demo": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@adl/runtime": "workspace:*",
+    "@adl/lenses": "workspace:*"
+  }
 }
