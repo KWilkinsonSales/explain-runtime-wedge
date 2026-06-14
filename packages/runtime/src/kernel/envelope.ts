@@ -1,4 +1,4 @@
-import type { RoomId } from "../room-contract/types.js";
+import type { RoomContractVersion, RoomId } from "../room-contract/types.js";
 import type { LensId, LensVersion } from "../lens-manifest/types.js";
 
 export type EnvelopeVersion = "0.1";
@@ -25,7 +25,7 @@ export type RuntimeEventKind =
 export type RuntimeEventPayloadByKind = {
   readonly LOAD_CONTRACT: {
     readonly roomId: RoomId;
-    readonly contractVersion: string;
+    readonly contractVersion: RoomContractVersion;
     readonly allowedEventKinds: readonly RuntimeEventKind[];
   };
   readonly LOAD_LENS_MANIFEST: {

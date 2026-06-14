@@ -1,9 +1,10 @@
 import type { ProofLensManifest } from "@adl/lenses";
-import type { KernelEventEnvelope } from "@adl/runtime";
+import type { KernelEventEnvelope, RoomContractVersion } from "@adl/runtime";
 import { normalizeAceEvent } from "./aceController.js";
 
 export function buildAceRuntimeEvents(manifest: ProofLensManifest): readonly KernelEventEnvelope[] {
   const roomId = `room-${manifest.lensId}`;
+  const contractVersion = "0.1" as RoomContractVersion;
   return [
     {
       envelopeVersion: "0.1",
@@ -12,7 +13,7 @@ export function buildAceRuntimeEvents(manifest: ProofLensManifest): readonly Ker
       kind: "LOAD_CONTRACT",
       payload: {
         roomId: roomId as never,
-        contractVersion: "0.1",
+        contractVersion,
         allowedEventKinds: ["LOAD_LENS_MANIFEST", "APPLY_USER_EVENT", "REQUEST_THRESHOLD_EVALUATION", "SELECT_RECEIPT", "CLOSE_ROOM"],
       },
     },
