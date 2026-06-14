@@ -1,4 +1,4 @@
-import type { KernelEventEnvelope, KernelState } from "@adl/runtime";
+import type { KernelEventEnvelope, KernelState, RoomContractVersion } from "@adl/runtime";
 import { initialKernelState, step } from "@adl/runtime";
 import type { ProofLensManifest } from "@adl/lenses";
 
@@ -12,13 +12,14 @@ export type ScenarioTrace = {
 
 export function buildScenario(manifest: ProofLensManifest): readonly KernelEventEnvelope[] {
   const roomId = `room-${manifest.lensId}` as never;
+  const contractVersion = "0.1" as RoomContractVersion;
   return [
     {
       envelopeVersion: "0.1",
       eventId: `${manifest.lensId}-1`,
       occurredAt: "2026-06-13T00:00:00.000Z",
       kind: "LOAD_CONTRACT",
-      payload: { roomId, contractVersion: "0.1", allowedEventKinds: ["LOAD_LENS_MANIFEST", "APPLY_USER_EVENT", "REQUEST_THRESHOLD_EVALUATION", "SELECT_RECEIPT", "CLOSE_ROOM"] }
+      payload: { roomId, contractVersion, allowedEventKinds: ["LOAD_LENS_MANIFEST", "APPLY_USER_EVENT", "REQUEST_THRESHOLD_EVALUATION", "SELECT_RECEIPT", "CLOSE_ROOM"] }
     },
     {
       envelopeVersion: "0.1",
