@@ -1,8 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../runtime" },
+    { "path": "../lenses" },
+    { "path": "../ui" }
+  ],
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "composite": true
   }
 }
