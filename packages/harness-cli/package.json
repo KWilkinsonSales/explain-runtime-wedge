@@ -7,10 +7,12 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "demo": "node dist/cli.js"
+    "demo": "node dist/cli.js",
+    "proof": "node dist/proof-cli.js"
   },
   "dependencies": {
+    "@adl/lenses": "workspace:*",
     "@adl/runtime": "workspace:*",
-    "@adl/lenses": "workspace:*"
+    "@adl/ui": "workspace:*"
   }
 }

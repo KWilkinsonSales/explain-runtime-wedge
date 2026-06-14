@@ -8,7 +8,7 @@ on:
       - sprint0/reference-runtime-playground
 
 jobs:
-  workspace:
+  proof:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,3 +22,9 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm build
+      - run: mkdir -p artifacts && pnpm proof | tee artifacts/runtime-proof.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-proof
+          path: artifacts/runtime-proof.json

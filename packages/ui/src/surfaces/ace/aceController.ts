@@ -10,6 +10,10 @@ export type AceSession = {
   readonly emittedEvents: readonly KernelEventEnvelope[];
 };
 
+export type AceNormalizationContext = {
+  readonly manifest: ProofLensManifest;
+};
+
 export function createAceSession(manifest: ProofLensManifest): AceSession {
   return {
     roomId: `room-${manifest.lensId}`,
@@ -19,7 +23,12 @@ export function createAceSession(manifest: ProofLensManifest): AceSession {
   };
 }
 
-export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: string): KernelEventEnvelope {
+export function normalizeAceEvent(
+  event: AceEvent,
+  occurredAt: string,
+  eventId: string,
+  context: AceNormalizationContext,
+): KernelEventEnvelope {
   switch (event.type) {
     case "ACE_ORIENTED_ROOM":
       return {
@@ -29,7 +38,11 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "LOAD_LENS_MANIFEST",
-        payload: { lensId: "canonical" as never, lensVersion: "0.1" as never, declaredEventKinds: ["APPLY_USER_EVENT", "REQUEST_THRESHOLD_EVALUATION", "SELECT_RECEIPT", "CLOSE_ROOM"] }
+        payload: {
+          lensId: context.manifest.lensId as never,
+          lensVersion: context.manifest.version as never,
+          declaredEventKinds: ["APPLY_USER_EVENT", "REQUEST_THRESHOLD_EVALUATION", "SELECT_RECEIPT", "CLOSE_ROOM"],
+        },
       };
     case "ACE_PRESENTED_CARD":
       return {
@@ -39,7 +52,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "APPLY_USER_EVENT",
-        payload: { fieldId: `presented:${event.cardId}`, value: true }
+        payload: { fieldId: `presented:${event.cardId}`, value: true },
       };
     case "ACE_COLLECTED_INPUT":
       return {
@@ -49,7 +62,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "APPLY_USER_EVENT",
-        payload: { fieldId: event.fieldId, value: event.value }
+        payload: { fieldId: event.fieldId, value: event.value },
       };
     case "ACE_CONFIRMED_EVIDENCE":
       return {
@@ -59,7 +72,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "APPLY_USER_EVENT",
-        payload: { fieldId: "confirmedEvidence", value: event.evidenceId }
+        payload: { fieldId: "confirmedEvidence", value: event.evidenceId },
       };
     case "ACE_FLAGGED_UNKNOWN":
       return {
@@ -69,7 +82,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "APPLY_USER_EVENT",
-        payload: { fieldId: "flaggedUnknown", value: event.unknownId }
+        payload: { fieldId: "flaggedUnknown", value: event.unknownId },
       };
     case "ACE_THRESHOLD_CHECK_REQUESTED":
       return {
@@ -79,7 +92,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "REQUEST_THRESHOLD_EVALUATION",
-        payload: { thresholdId: event.thresholdId }
+        payload: { thresholdId: event.thresholdId },
       };
     case "ACE_RECEIPT_SELECTED":
       return {
@@ -89,7 +102,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "SELECT_RECEIPT",
-        payload: { receiptType: event.receiptType }
+        payload: { receiptType: event.receiptType },
       };
     case "ACE_ROOM_CLOSED":
       return {
@@ -99,7 +112,7 @@ export function normalizeAceEvent(event: AceEvent, occurredAt: string, eventId: 
         roomId: event.roomId as never,
         actor: { actorId: "voice-sim", actorType: "surface" },
         kind: "CLOSE_ROOM",
-        payload: { reason: "completed" }
+        payload: { reason: "completed" },
       };
   }
 }
