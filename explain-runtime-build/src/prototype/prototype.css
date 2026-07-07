@@ -151,6 +151,32 @@ button.secondary {
   font: inherit;
 }
 
+.start-companion {
+  border: 0;
+  border-radius: 999px;
+  padding: 1rem 2rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  background: #6fdc9a;
+  color: #071316;
+  font-family: inherit;
+}
+
+.raw-error {
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(226, 104, 95, 0.12);
+  border: 1px solid rgba(226, 104, 95, 0.35);
+  color: #f0b8b0;
+  font-size: 0.78rem;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .text-mode-panel textarea {
   width: 100%;
   min-height: 6rem;
@@ -228,6 +254,23 @@ button.secondary {
 
 .diagnostics-footer strong {
   font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
+
+.diagnostics-footer-wide {
+  grid-column: 1 / -1;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.diagnostics-footer-wide strong {
+  text-align: left;
+}
+
+.text-mode-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .intent-row {

@@ -2,7 +2,7 @@
 // can be unit tested without a browser.
 
 export type CompanionRuntimeState =
-  | "INITIALIZING"
+  | "IDLE"
   | "REQUESTING_PERMISSION"
   | "LISTENING"
   | "TEXT_MODE"
@@ -47,4 +47,19 @@ export function classifyMicrophoneError(error: unknown): VoiceUnavailableReason 
     return "permission-denied";
   }
   return "runtime-failure";
+}
+
+// The raw error name/message, for diagnostics. Never shown in place of the
+// human-readable VOICE_UNAVAILABLE_MESSAGES copy, only alongside it, so the
+// prototype never hides what actually happened.
+export function describeMicrophoneError(error: unknown): string {
+  if (error instanceof Error) {
+    return `${error.name || "Error"}: ${error.message || "(no message)"}`;
+  }
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
