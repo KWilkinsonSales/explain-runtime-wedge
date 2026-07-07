@@ -48,3 +48,24 @@ Route `/api/*` to the Worker or set a Vite proxy during local development.
 ## Important limitation
 
 This package is build-ready source, not a deployed operational proof. OpenAI Realtime request fields and supported model/voice names can change; verify against current official API documentation before deployment. The human 4-of-5 naturalness gate still requires real listeners.
+
+## Companion prototype (private, `/companion/prototype`)
+
+A separate, isolated proof surface for the iPhone-first "Companion ON" experience lives at
+`src/prototype/` and is only reachable at the exact path `/companion/prototype`. It is gated by
+`COMPANION_PROTOTYPE_ENABLED` in `src/prototype/featureFlag.ts` — flip that to `false` to disable
+it entirely without deleting code. Every other path, including `/companion` with no suffix,
+renders the unchanged production `App`.
+
+- Installable on iPhone: open `/companion/prototype` in Safari, Share → Add to Home Screen. The
+  page injects its own `apple-touch-icon`, `apple-mobile-web-app-title` ("Companion"), and
+  `manifest.webmanifest` only while it is mounted, then removes them on unmount, so the production
+  page never inherits the Companion identity or its service worker.
+- Shows a visible Listening/Provisional state, the five intent commands (Nosta·Observe,
+  Sogo·Guide, Tanca·Truth, Anor·Illuminate, Durin·Govern), and SPEAK/STEER/SITUATION cards.
+- Includes a Mac teleprompter proof surface at `/companion/prototype?view=teleprompter`. It syncs
+  live via `BroadcastChannel`/`localStorage` across tabs or windows in the **same** browser only.
+  True phone-to-Mac sync would need a deployed backend relay — out of scope for this build-first
+  pass.
+- This is a private prototype, not a production admission decision. It does not claim v1.0
+  acceptance and Companion ON is not the production default.

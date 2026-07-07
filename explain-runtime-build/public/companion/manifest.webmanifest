@@ -1,0 +1,16 @@
+{
+  "name": "Companion",
+  "short_name": "Companion",
+  "description": "Private prototype build of the Companion ON experience. Proof surface, not production.",
+  "start_url": "/companion/prototype",
+  "scope": "/companion/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071316",
+  "theme_color": "#0b1b1d",
+  "icons": [
+    { "src": "/companion/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/companion/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/companion/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
