@@ -1,4 +1,3 @@
 [build]
-  base = "explain-runtime-build"
-  command = "npm install && npm run build"
-  publish = "dist"
+  command = "npm --prefix explain-runtime-build install && npm --prefix explain-runtime-build run build"
+  publish = "explain-runtime-build/dist"
