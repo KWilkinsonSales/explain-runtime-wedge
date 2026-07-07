@@ -1,0 +1,248 @@
+.companion-shell {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, rgba(35, 151, 151, 0.16), transparent 45%), #071316;
+  color: #f4f0e4;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  padding: 0 0 3rem;
+}
+
+.companion-banner {
+  background: #3a2a12;
+  border-bottom: 1px solid rgba(215, 181, 109, 0.4);
+  color: #f0d39a;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.55rem 1rem;
+}
+
+.companion-header {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 0;
+  text-align: center;
+}
+
+.companion-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  opacity: 0.6;
+}
+
+.companion-header h1 {
+  font-family: Georgia, serif;
+  font-weight: 500;
+  margin: 0.3rem 0 1rem;
+  font-size: clamp(2rem, 8vw, 2.8rem);
+}
+
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid rgba(244, 240, 228, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.state-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.state-badge.listening .state-dot {
+  background: #6fdc9a;
+  box-shadow: 0 0 0 rgba(111, 220, 154, 0.5);
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+.state-badge.provisional .state-dot {
+  background: #d7b56d;
+}
+
+@keyframes pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(111, 220, 154, 0.55); }
+  70% { box-shadow: 0 0 0 10px rgba(111, 220, 154, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(111, 220, 154, 0); }
+}
+
+.listen-toggle {
+  margin-top: 1rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  background: #d7b56d;
+  color: #071316;
+}
+
+.listen-toggle.is-listening {
+  background: transparent;
+  color: #f4f0e4;
+  border: 1px solid rgba(244, 240, 228, 0.3);
+}
+
+.intent-row {
+  max-width: 640px;
+  margin: 1.75rem auto 0;
+  padding: 0 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.intent-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(244, 240, 228, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #f4f0e4;
+  padding: 0.7rem 0.3rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.intent-button strong {
+  font-size: 0.85rem;
+}
+
+.intent-button span {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+
+.intent-button.active {
+  border-color: #d7b56d;
+  background: rgba(215, 181, 109, 0.14);
+}
+
+.card-stack {
+  max-width: 640px;
+  margin: 1.75rem auto 0;
+  padding: 0 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.companion-card {
+  border-radius: 18px;
+  border: 1px solid rgba(244, 240, 228, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.1rem 1.25rem;
+}
+
+.companion-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.6;
+}
+
+.companion-card p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.companion-card .situation-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.companion-card .situation-grid dt {
+  opacity: 0.55;
+}
+
+.companion-card .situation-grid dd {
+  margin: 0;
+}
+
+.teleprompter-panel textarea {
+  width: 100%;
+  min-height: 4rem;
+  border-radius: 12px;
+  border: 1px solid rgba(244, 240, 228, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.teleprompter-panel button {
+  margin-top: 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #2b8b8d;
+  color: #f4f0e4;
+}
+
+.teleprompter-panel small {
+  display: block;
+  margin-top: 0.5rem;
+  opacity: 0.55;
+  line-height: 1.5;
+}
+
+.teleprompter-panel a {
+  color: #d7b56d;
+}
+
+.companion-footer {
+  max-width: 640px;
+  margin: 1.5rem auto 0;
+  padding: 0 1.25rem;
+  text-align: center;
+  font-size: 0.74rem;
+  opacity: 0.5;
+}
+
+/* Teleprompter display view (meant for a Mac browser window) */
+.teleprompter-view {
+  min-height: 100vh;
+  background: #050c0d;
+  color: #f4f0e4;
+  display: grid;
+  place-items: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.teleprompter-view .tag {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
+}
+
+.teleprompter-view .line {
+  font-family: Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 3.4rem);
+  line-height: 1.4;
+  max-width: 60ch;
+}
+
+.teleprompter-view .meta {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  opacity: 0.55;
+}
