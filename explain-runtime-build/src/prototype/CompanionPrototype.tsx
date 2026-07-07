@@ -4,6 +4,7 @@ import { publishTeleprompter } from "./teleprompterSync";
 import { usePrototypeHeadTags } from "./usePrototypeHeadTags";
 import {
   classifyMicrophoneError,
+  describeMicrophoneError,
   isGetUserMediaSupported,
   isSpeechRecognitionSupported,
   VOICE_UNAVAILABLE_MESSAGES,
@@ -14,7 +15,7 @@ import {
 import "./prototype.css";
 
 const STATE_LABEL: Record<CompanionRuntimeState, string> = {
-  INITIALIZING: "Initializing",
+  IDLE: "Companion OFF",
   REQUESTING_PERMISSION: "Requesting mic access",
   LISTENING: "Listening",
   TEXT_MODE: "Text Mode",
@@ -23,7 +24,7 @@ const STATE_LABEL: Record<CompanionRuntimeState, string> = {
 };
 
 const STATE_BADGE_CLASS: Record<CompanionRuntimeState, string> = {
-  INITIALIZING: "pending",
+  IDLE: "pending",
   REQUESTING_PERMISSION: "pending",
   LISTENING: "listening",
   TEXT_MODE: "text-mode",
@@ -39,10 +40,11 @@ export default function CompanionPrototype() {
   const getUserMediaSupported = useMemo(() => isGetUserMediaSupported(navigator), []);
   const speechRecognitionSupported = useMemo(() => isSpeechRecognitionSupported(window), []);
 
-  const [runtimeState, setRuntimeState] = useState<CompanionRuntimeState>("INITIALIZING");
+  const [runtimeState, setRuntimeState] = useState<CompanionRuntimeState>("IDLE");
   const [micPermission, setMicPermission] = useState<MicPermissionStatus>("unknown");
   const [voiceUnavailableReason, setVoiceUnavailableReason] = useState<VoiceUnavailableReason | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastMicError, setLastMicError] = useState<string | null>(null);
 
   const [activeIntentId, setActiveIntentId] = useState<IntentId | null>(null);
   const [manualLine, setManualLine] = useState("");
@@ -51,11 +53,17 @@ export default function CompanionPrototype() {
   const [sentMessages, setSentMessages] = useState<string[]>([]);
 
   const streamRef = useRef<MediaStream | null>(null);
+  const textInputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Must be invoked directly from a user tap (never from an effect on mount) —
+  // iOS Safari will not reliably surface the native mic permission prompt
+  // unless getUserMedia is called synchronously within a user gesture handler.
   async function requestMicrophoneAccess() {
     setRuntimeState("REQUESTING_PERMISSION");
+    setErrorMessage(null);
 
     if (!getUserMediaSupported) {
+      setLastMicError("getUserMedia is not defined on navigator.mediaDevices in this browser.");
       setVoiceUnavailableReason("unsupported");
       setRuntimeState("VOICE_UNAVAILABLE");
       return;
@@ -65,35 +73,29 @@ export default function CompanionPrototype() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       setMicPermission("granted");
+      setLastMicError(null);
       setRuntimeState("LISTENING");
     } catch (error) {
       const reason = classifyMicrophoneError(error);
       setMicPermission(reason === "permission-denied" ? "denied" : "unknown");
       setVoiceUnavailableReason(reason);
+      setLastMicError(describeMicrophoneError(error));
       setRuntimeState("VOICE_UNAVAILABLE");
     }
   }
 
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        await requestMicrophoneAccess();
-      } catch (error) {
-        if (cancelled) return;
-        setErrorMessage(error instanceof Error ? error.message : "Unknown runtime failure.");
-        setRuntimeState("ERROR");
-      }
-    })();
-
     return () => {
-      cancelled = true;
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (runtimeState === "TEXT_MODE") {
+      textInputRef.current?.focus();
+    }
+  }, [runtimeState]);
 
   function enterTextMode() {
     setRuntimeState("TEXT_MODE");
@@ -112,6 +114,13 @@ export default function CompanionPrototype() {
     if (!message) return;
     setSentMessages((messages) => [...messages, message]);
     setTextDraft("");
+  }
+
+  function handleTextDraftKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendTextMessage();
+    }
   }
 
   const activeIntent = findIntent(activeIntentId);
@@ -142,10 +151,25 @@ export default function CompanionPrototype() {
         </div>
       </header>
 
-      {(runtimeState === "INITIALIZING" || runtimeState === "REQUESTING_PERMISSION") && (
+      {runtimeState === "IDLE" && (
         <section className="status-panel">
-          <p>{runtimeState === "INITIALIZING" ? "Initializing…" : "Requesting microphone access…"}</p>
-          <small>iOS should show a native microphone permission prompt now.</small>
+          <p>Tap below to turn Companion on and grant microphone access.</p>
+          <div className="status-panel-actions">
+            <button className="start-companion" onClick={requestMicrophoneAccess}>
+              Start Companion ON
+            </button>
+            <button className="secondary" onClick={enterTextMode}>Enter Text Mode</button>
+          </div>
+        </section>
+      )}
+
+      {runtimeState === "REQUESTING_PERMISSION" && (
+        <section className="status-panel">
+          <p>Requesting microphone access…</p>
+          <small>Your browser should show a native microphone permission prompt now.</small>
+          <div className="status-panel-actions">
+            <button className="secondary" onClick={enterTextMode}>Enter Text Mode instead</button>
+          </div>
         </section>
       )}
 
@@ -156,6 +180,9 @@ export default function CompanionPrototype() {
               ? errorMessage ?? "The Companion runtime failed to initialize."
               : VOICE_UNAVAILABLE_MESSAGES[voiceUnavailableReason ?? "runtime-failure"]}
           </p>
+          {lastMicError && (
+            <pre className="raw-error">{lastMicError}</pre>
+          )}
           <div className="status-panel-actions">
             {getUserMediaSupported && (
               <button className="secondary" onClick={requestMicrophoneAccess}>
@@ -241,13 +268,16 @@ export default function CompanionPrototype() {
             <h2>Text Mode</h2>
             <p>Voice may be unavailable or paused. Type a message instead.</p>
             <textarea
+              ref={textInputRef}
               value={textDraft}
               onChange={(event) => setTextDraft(event.target.value)}
-              placeholder="Type a message…"
+              onKeyDown={handleTextDraftKeyDown}
+              placeholder="Type a message… (Enter to send, Shift+Enter for a new line)"
               rows={4}
+              autoFocus
             />
             <div className="text-mode-actions">
-              <button onClick={sendTextMessage}>Send</button>
+              <button onClick={sendTextMessage} disabled={textDraft.trim().length === 0}>Send</button>
               <button className="secondary" onClick={backToVoice}>Back to Voice</button>
             </div>
             {sentMessages.length > 0 && (
@@ -275,12 +305,16 @@ export default function CompanionPrototype() {
           <strong>{getUserMediaSupported ? "Supported" : "Unsupported"}</strong>
         </div>
         <div>
-          <span>SpeechRecognition</span>
+          <span>SpeechRecognition (unused by Voice)</span>
           <strong>{speechRecognitionSupported ? "Supported" : "Unsupported"}</strong>
         </div>
         <div>
           <span>Current State</span>
           <strong>{runtimeState}</strong>
+        </div>
+        <div className="diagnostics-footer-wide">
+          <span>Last Mic Error</span>
+          <strong>{lastMicError ?? "None"}</strong>
         </div>
       </footer>
     </div>
