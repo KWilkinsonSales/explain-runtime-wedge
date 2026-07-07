@@ -229,6 +229,49 @@ button.secondary {
   font-size: 0.9rem;
 }
 
+.admission-receipt-input {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.event-type-tag {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(215, 181, 109, 0.18);
+  color: #d7b56d;
+  flex-shrink: 0;
+}
+
+.event-type-tag.statement {
+  background: rgba(127, 176, 216, 0.18);
+  color: #7fb0d8;
+}
+
+.admission-receipt-output {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(244, 240, 228, 0.1);
+}
+
+.admission-receipt-output p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.admission-receipt-output strong {
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-right: 0.4rem;
+}
+
 .diagnostics-footer {
   max-width: 640px;
   margin: 0.75rem auto 1.5rem;

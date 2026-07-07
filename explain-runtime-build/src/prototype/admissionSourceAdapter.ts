@@ -1,13 +1,18 @@
-// Companion Admission Source Adapter.
+// Companion Admission Source Adapter — Stage 1.
 //
 // Normalizes text arriving from any admission source into one event shape,
 // classifies it deterministically as a question or statement, and feeds that
 // classification into the existing Companion output path (SPEAK + STEER +
-// receipt). The source_provider only ever changes the evidence-quality note
-// carried on source_receipt — it never changes event_type, confidence, or the
-// resulting SPEAK/STEER output. Those are derived from text_chunk alone.
+// receipt). Architecture rule: source changes evidence quality, not Companion
+// behavior — source_provider only ever changes the evidence-quality note
+// carried on source_receipt. event_type, confidence, and the resulting
+// SPEAK/STEER output are derived from text_chunk alone, regardless of source.
+//
+// otter_archive is archive/import-only: it normalizes transcript text already
+// obtained from Otter (or a meeting reference to it). It never opens a live
+// Otter connection.
 
-export type SourceProvider = "browser_mic" | "otter" | "paste_text";
+export type SourceProvider = "browser_mic" | "otter_archive" | "paste_text";
 
 export type CompanionEventType = "question" | "statement";
 
@@ -16,6 +21,7 @@ export interface SourceReceipt {
   session_id: string;
   timestamp: string;
   evidence_quality: string;
+  otter_meeting_id?: string;
 }
 
 export interface NormalizedAdmissionEvent {
@@ -35,7 +41,8 @@ export interface CompanionOutput {
 }
 
 export interface AdmissionReceipt {
-  source: SourceReceipt;
+  source_provider: SourceProvider;
+  source_receipt: SourceReceipt;
   event: {
     event_type: CompanionEventType;
     confidence: number;
@@ -56,7 +63,7 @@ export interface AdmissionInput {
 // feeds into event detection or Companion output.
 const SOURCE_EVIDENCE_QUALITY: Record<SourceProvider, string> = {
   browser_mic: "live audio capture; transcript fidelity unverified",
-  otter: "third-party transcript; provider-attributed speaker labels",
+  otter_archive: "archived third-party transcript; imported, not live-streamed",
   paste_text: "verbatim operator-entered text; highest textual fidelity"
 };
 
@@ -109,8 +116,8 @@ export function normalizeAdmissionInput(input: AdmissionInput): NormalizedAdmiss
   };
 }
 
-// The existing Companion output path: SPEAK is one next line, STEER is the
-// posture/boundary behind it. Driven only by event_type — never by
+// The existing Companion output path: SPEAK is one concise next line, STEER is
+// the posture/boundary behind it. Driven only by event_type — never by
 // source_provider — per the evidence-quality-not-behavior rule.
 export function toCompanionOutput(event: NormalizedAdmissionEvent): CompanionOutput {
   const text = event.text_chunk.trim();
@@ -130,7 +137,8 @@ export function toCompanionOutput(event: NormalizedAdmissionEvent): CompanionOut
 
 export function buildAdmissionReceipt(event: NormalizedAdmissionEvent, output: CompanionOutput): AdmissionReceipt {
   return {
-    source: event.source_receipt,
+    source_provider: event.source_provider,
+    source_receipt: event.source_receipt,
     event: {
       event_type: event.event_type,
       confidence: event.confidence,
@@ -141,9 +149,68 @@ export function buildAdmissionReceipt(event: NormalizedAdmissionEvent, output: C
 }
 
 // The single acceptance rail: text_chunk -> event_type/confidence -> SPEAK ->
-// STEER -> receipt, in one call.
+// STEER -> receipt, in one call. Works identically regardless of source_provider.
 export function runAdmissionRail(input: AdmissionInput): AdmissionReceipt {
   const event = normalizeAdmissionInput(input);
   const output = toCompanionOutput(event);
   return buildAdmissionReceipt(event, output);
+}
+
+// --- paste_text adapter -----------------------------------------------
+
+export interface PasteTextInput {
+  session_id: string;
+  text_chunk: string;
+  speaker_label?: string;
+}
+
+export function runPasteTextRail(input: PasteTextInput): AdmissionReceipt {
+  return runAdmissionRail({ ...input, source_provider: "paste_text" });
+}
+
+// --- otter_archive adapter ----------------------------------------------
+// Archive/import only. Accepts an Otter meeting ID for provenance, and/or
+// transcript text already obtained from Otter (e.g. a copy-pasted export).
+// Never opens a live connection to Otter.
+
+export interface OtterArchiveImportInput {
+  session_id: string;
+  otter_meeting_id?: string;
+  transcript_text?: string;
+  speaker_label?: string;
+}
+
+function withOtterMeetingId(event: NormalizedAdmissionEvent, otter_meeting_id?: string): NormalizedAdmissionEvent {
+  if (!otter_meeting_id) return event;
+  return {
+    ...event,
+    source_receipt: { ...event.source_receipt, otter_meeting_id }
+  };
+}
+
+// Splits an archived transcript into line-based chunks and normalizes each
+// into the same event contract as any other source.
+export function normalizeOtterArchiveTranscript(input: OtterArchiveImportInput): NormalizedAdmissionEvent[] {
+  const lines = (input.transcript_text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  return lines.map((line) =>
+    withOtterMeetingId(
+      normalizeAdmissionInput({
+        source_provider: "otter_archive",
+        session_id: input.session_id,
+        text_chunk: line,
+        speaker_label: input.speaker_label
+      }),
+      input.otter_meeting_id
+    )
+  );
+}
+
+// Runs every chunk of an archived Otter transcript through the same
+// event -> SPEAK -> STEER -> receipt rail as any other source.
+export function runOtterArchiveImportRail(input: OtterArchiveImportInput): AdmissionReceipt[] {
+  return normalizeOtterArchiveTranscript(input).map((event) => buildAdmissionReceipt(event, toCompanionOutput(event)));
 }

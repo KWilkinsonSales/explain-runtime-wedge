@@ -12,6 +12,7 @@ import {
   type MicPermissionStatus,
   type VoiceUnavailableReason
 } from "./companionRuntime";
+import { runPasteTextRail, type AdmissionReceipt } from "./admissionSourceAdapter";
 import "./prototype.css";
 
 const STATE_LABEL: Record<CompanionRuntimeState, string> = {
@@ -50,7 +51,7 @@ export default function CompanionPrototype() {
   const [manualLine, setManualLine] = useState("");
   const [broadcastedAt, setBroadcastedAt] = useState<string | null>(null);
   const [textDraft, setTextDraft] = useState("");
-  const [sentMessages, setSentMessages] = useState<string[]>([]);
+  const [sentMessages, setSentMessages] = useState<AdmissionReceipt[]>([]);
 
   const streamRef = useRef<MediaStream | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -112,7 +113,8 @@ export default function CompanionPrototype() {
   function sendTextMessage() {
     const message = textDraft.trim();
     if (!message) return;
-    setSentMessages((messages) => [...messages, message]);
+    const receipt = runPasteTextRail({ session_id: sessionId, text_chunk: message });
+    setSentMessages((messages) => [...messages, receipt]);
     setTextDraft("");
   }
 
@@ -282,8 +284,17 @@ export default function CompanionPrototype() {
             </div>
             {sentMessages.length > 0 && (
               <ul className="text-mode-transcript">
-                {sentMessages.map((message, index) => (
-                  <li key={index}>{message}</li>
+                {sentMessages.map((receipt, index) => (
+                  <li key={index} className="admission-receipt">
+                    <div className="admission-receipt-input">
+                      <span className={`event-type-tag ${receipt.event.event_type}`}>{receipt.event.event_type}</span>
+                      <span>{receipt.event.text_chunk}</span>
+                    </div>
+                    <div className="admission-receipt-output">
+                      <p><strong>Speak</strong> {receipt.output.speak}</p>
+                      <p><strong>Steer</strong> {receipt.output.steer}</p>
+                    </div>
+                  </li>
                 ))}
               </ul>
             )}
