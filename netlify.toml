@@ -1,3 +1,3 @@
 [build]
-  command = "npm --prefix explain-runtime-build install && npm --prefix explain-runtime-build run build"
+  command = "cd explain-runtime-build && pnpm install --ignore-workspace && npm run build"
   publish = "explain-runtime-build/dist"
