@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   detectEventType,
   normalizeAdmissionInput,
+  normalizeOtterArchiveTranscript,
   runAdmissionRail,
+  runOtterArchiveImportRail,
+  runPasteTextRail,
   toCompanionOutput,
   type SourceProvider
 } from "../src/prototype/admissionSourceAdapter";
@@ -29,7 +32,7 @@ describe("detectEventType", () => {
 });
 
 describe("normalizeAdmissionInput", () => {
-  const SOURCES: SourceProvider[] = ["browser_mic", "otter", "paste_text"];
+  const SOURCES: SourceProvider[] = ["browser_mic", "otter_archive", "paste_text"];
 
   it("produces the required normalized event shape", () => {
     const event = normalizeAdmissionInput({
@@ -77,7 +80,7 @@ describe("normalizeAdmissionInput", () => {
 describe("toCompanionOutput", () => {
   it("answers directly for a question event", () => {
     const event = normalizeAdmissionInput({
-      source_provider: "otter",
+      source_provider: "otter_archive",
       session_id: "sess-4",
       text_chunk: "Should we escalate this?"
     });
@@ -110,20 +113,71 @@ describe("runAdmissionRail (acceptance rail)", () => {
     expect(receipt.event.confidence).toBeGreaterThan(0);
     expect(receipt.output.speak.length).toBeGreaterThan(0);
     expect(receipt.output.steer.length).toBeGreaterThan(0);
-    expect(receipt.source.source_provider).toBe("paste_text");
-    expect(receipt).toEqual({
-      source: receipt.source,
-      event: receipt.event,
-      output: receipt.output
-    });
+    expect(receipt.source_provider).toBe("paste_text");
+    expect(receipt.source_receipt.source_provider).toBe("paste_text");
   });
 
   it("produces the same SPEAK/STEER output across all three source providers for the same text", () => {
     const text = "We are blocked on legal review.";
-    const outputs = (["browser_mic", "otter", "paste_text"] as SourceProvider[]).map(
+    const outputs = (["browser_mic", "otter_archive", "paste_text"] as SourceProvider[]).map(
       (source_provider) => runAdmissionRail({ source_provider, session_id: "sess-7", text_chunk: text }).output
     );
     expect(outputs[0]).toEqual(outputs[1]);
     expect(outputs[1]).toEqual(outputs[2]);
+  });
+});
+
+describe("Stage 1 acceptance fixture", () => {
+  it("carries the ADL question fixture through event_type -> confidence -> SPEAK -> STEER -> receipt", () => {
+    const receipt = runPasteTextRail({
+      session_id: "stage1-fixture",
+      text_chunk: "So I'm just trying to understand, why would I even want to go with ADL and help me understand that?"
+    });
+
+    expect(receipt.event.event_type).toBe("question");
+    expect(receipt.event.confidence).toBeGreaterThan(0);
+    expect(receipt.output.speak.length).toBeGreaterThan(0);
+    expect(receipt.output.steer.length).toBeGreaterThan(0);
+    expect(receipt).toBeTruthy();
+  });
+});
+
+describe("otter_archive adapter", () => {
+  it("normalizes each line of an archived transcript into its own event", () => {
+    const events = normalizeOtterArchiveTranscript({
+      session_id: "sess-8",
+      otter_meeting_id: "meeting-123",
+      transcript_text: "Why did the migration fail?\nWe rolled it back at 3pm.\n\n"
+    });
+
+    expect(events).toHaveLength(2);
+    expect(events[0].event_type).toBe("question");
+    expect(events[1].event_type).toBe("statement");
+    expect(events[0].source_provider).toBe("otter_archive");
+    expect(events[0].source_receipt.otter_meeting_id).toBe("meeting-123");
+  });
+
+  it("accepts a meeting ID with no transcript text yet without throwing", () => {
+    const events = normalizeOtterArchiveTranscript({ session_id: "sess-9", otter_meeting_id: "meeting-456" });
+    expect(events).toEqual([]);
+  });
+
+  it("runs the full rail per chunk via runOtterArchiveImportRail", () => {
+    const receipts = runOtterArchiveImportRail({
+      session_id: "sess-10",
+      otter_meeting_id: "meeting-789",
+      transcript_text: "How should we handle the handoff?"
+    });
+
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0].event.event_type).toBe("question");
+    expect(receipts[0].output.speak.length).toBeGreaterThan(0);
+    expect(receipts[0].output.steer.length).toBeGreaterThan(0);
+    expect(receipts[0].source_receipt.otter_meeting_id).toBe("meeting-789");
+  });
+
+  it("never requires a live connection — only ever consumes already-provided transcript text", () => {
+    const receipts = runOtterArchiveImportRail({ session_id: "sess-11", otter_meeting_id: "meeting-000" });
+    expect(receipts).toEqual([]);
   });
 });
