@@ -3,6 +3,11 @@ dist/
 coverage/
 .vite/
 *.log
+*.tsbuildinfo
+# Installs resolve fresh everywhere (CI passes --frozen-lockfile=false and
+# Netlify installs with --ignore-workspace); a committed pnpm lockfile would
+# flip those to frozen installs.
+pnpm-lock.yaml
 .DS_Store
 .env
 .env.*

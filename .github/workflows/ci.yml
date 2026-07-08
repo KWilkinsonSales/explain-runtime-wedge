@@ -19,9 +19,11 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile=false
+      # Build first: @adl/ui and @adl/harness-cli resolve their workspace
+      # dependencies' types from each package's emitted dist/.
+      - run: pnpm build
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm build
       - run: mkdir -p artifacts && pnpm proof | tee artifacts/runtime-proof.json
       - uses: actions/upload-artifact@v4
         with:
