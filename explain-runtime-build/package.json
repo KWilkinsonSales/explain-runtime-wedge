@@ -7,17 +7,20 @@
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "worker:dev": "wrangler dev --config worker/wrangler.toml",
     "worker:deploy": "wrangler deploy --config worker/wrangler.toml"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "vitest": "latest",
     "wrangler": "latest"
   }

@@ -29,7 +29,7 @@ export function isGetUserMediaSupported(nav: MediaDevicesLike): boolean {
   return typeof nav.mediaDevices?.getUserMedia === "function";
 }
 
-interface SpeechRecognitionWindowLike {
+export interface SpeechRecognitionWindowLike {
   SpeechRecognition?: unknown;
   webkitSpeechRecognition?: unknown;
 }

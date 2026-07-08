@@ -10,6 +10,7 @@ import {
   VOICE_UNAVAILABLE_MESSAGES,
   type CompanionRuntimeState,
   type MicPermissionStatus,
+  type SpeechRecognitionWindowLike,
   type VoiceUnavailableReason
 } from "./companionRuntime";
 import { runPasteTextRail, type AdmissionReceipt } from "./admissionSourceAdapter";
@@ -39,7 +40,10 @@ export default function CompanionPrototype() {
   const sessionId = useMemo(() => `proto-${Math.random().toString(36).slice(2, 8)}`, []);
   const startedAt = useMemo(() => new Date(), []);
   const getUserMediaSupported = useMemo(() => isGetUserMediaSupported(navigator), []);
-  const speechRecognitionSupported = useMemo(() => isSpeechRecognitionSupported(window), []);
+  const speechRecognitionSupported = useMemo(
+    () => isSpeechRecognitionSupported(window as unknown as SpeechRecognitionWindowLike),
+    []
+  );
 
   const [runtimeState, setRuntimeState] = useState<CompanionRuntimeState>("IDLE");
   const [micPermission, setMicPermission] = useState<MicPermissionStatus>("unknown");
