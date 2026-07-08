@@ -1,3 +1,6 @@
 [build]
   command = "cd explain-runtime-build && pnpm install --ignore-workspace && npm run build"
   publish = "explain-runtime-build/dist"
+
+[functions]
+  directory = "netlify/functions"
