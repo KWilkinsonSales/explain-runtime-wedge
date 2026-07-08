@@ -3,6 +3,7 @@ import {
   appendSegment,
   createTranscriptBuffer,
   deepgramSocketUrl,
+  deepgramSocketProtocols,
   isTranscriptReceiving,
   parseDeepgramMessage,
   pickRecorderMimeType,
@@ -16,6 +17,16 @@ describe("deepgramSocketUrl", () => {
     expect(url.startsWith("wss://api.deepgram.com/v1/listen?")).toBe(true);
     expect(url).toContain("interim_results=true");
     expect(url).toContain("model=nova-2");
+  });
+});
+
+describe("deepgramSocketProtocols", () => {
+  it("uses bearer subprotocol credentials for temporary JWT grants", () => {
+    expect(deepgramSocketProtocols({ tokenType: "bearer", value: "jwt-token" })).toEqual(["bearer", "jwt-token"]);
+  });
+
+  it("keeps token subprotocol credentials for temporary API keys", () => {
+    expect(deepgramSocketProtocols({ tokenType: "token", value: "api-key" })).toEqual(["token", "api-key"]);
   });
 });
 
