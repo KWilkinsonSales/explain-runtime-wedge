@@ -144,16 +144,28 @@ export function isTranscriptReceiving(lastSegmentAt: string | null, now: Date, f
 
 interface DeepgramTokenResponse {
   key?: string;
+  access_token?: string;
+  token_type?: "bearer" | "token";
   error?: string;
 }
 
-async function fetchDeepgramToken(): Promise<string> {
+interface DeepgramCredential {
+  value: string;
+  tokenType: "bearer" | "token";
+}
+
+export function deepgramSocketProtocols(credential: DeepgramCredential): string[] {
+  return [credential.tokenType, credential.value];
+}
+
+async function fetchDeepgramToken(): Promise<DeepgramCredential> {
   const response = await fetch(DEEPGRAM_TOKEN_ENDPOINT, { method: "POST" });
   const body = (await response.json().catch(() => ({}))) as DeepgramTokenResponse;
-  if (!response.ok || !body.key) {
+  const value = body.access_token ?? body.key;
+  if (!response.ok || !value) {
     throw new Error(body.error ?? `Token endpoint returned ${response.status}.`);
   }
-  return body.key;
+  return { value, tokenType: body.token_type === "bearer" ? "bearer" : "token" };
 }
 
 const KEEPALIVE_MS = 8000;
@@ -175,8 +187,8 @@ function startDeepgram(stream: MediaStream, callbacks: LiveCallbacks): Promise<L
     pushDiagnostics();
 
     fetchDeepgramToken()
-      .then((token) => {
-        const socket = new WebSocket(deepgramSocketUrl(), ["token", token]);
+      .then((credential) => {
+        const socket = new WebSocket(deepgramSocketUrl(), deepgramSocketProtocols(credential));
         let recorder: MediaRecorder | null = null;
         let keepalive: ReturnType<typeof setInterval> | null = null;
         let settled = false;
