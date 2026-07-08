@@ -13,6 +13,7 @@
   "dependencies": {
     "@adl/lenses": "workspace:*",
     "@adl/runtime": "workspace:*",
-    "@adl/ui": "workspace:*"
+    "@adl/ui": "workspace:*",
+    "@types/node": "^22.15.3"
   }
 }
