@@ -473,3 +473,10 @@ button.secondary {
   font-size: 0.85rem;
   opacity: 0.55;
 }
+
+.live-status-detail {
+  display: block;
+  margin-top: 0.5rem;
+  opacity: 0.55;
+  line-height: 1.5;
+}
