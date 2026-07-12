@@ -31,6 +31,9 @@ preset.
 
 ## Running
 
+Production review URL: **https://companion-prototype-erw.netlify.app/teacher**
+(the deployment root `/` is a product selector with a Teacher Preparation entry).
+
 ```bash
 cd explain-runtime-build
 npm install

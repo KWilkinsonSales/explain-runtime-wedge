@@ -1,0 +1,61 @@
+/* Root product selector: neutral, calm, large targets. */
+
+.ps-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  background: #f5f3ee;
+  color: #26303a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.125rem;
+  padding: 1.5rem;
+}
+
+.ps-shell h1 {
+  font-weight: 500;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.ps-shell nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(92vw, 420px);
+}
+
+.ps-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.1rem 1.3rem;
+  min-height: 48px;
+  background: #ffffff;
+  border: 1px solid #d8d2c6;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ps-card:hover {
+  border-color: #34544a;
+}
+
+.ps-card:focus-visible {
+  outline: 3px solid #2f6b8f;
+  outline-offset: 2px;
+}
+
+.ps-name {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #34544a;
+}
+
+.ps-desc {
+  color: #4c5a66;
+  font-size: 1rem;
+}
