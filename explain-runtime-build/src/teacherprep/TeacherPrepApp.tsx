@@ -1,16 +1,18 @@
-import React, { useMemo, useState } from "react";
-import type { PrepDoc, PrivateMaterial } from "./types";
+import React, { useEffect, useMemo, useState } from "react";
+import type { PrepDoc, PrivateMaterial, WeeklyLesson } from "./types";
 import { DISCLAIMER, ILLUSTRATIVE_LESSON } from "./fixture";
 import { PrivateStore, SharedStore } from "./store";
 import { createPrepDoc } from "./prep";
 import { createSnapshot } from "./snapshot";
+import { lessonFromCurrentWeek, resolveCurrentWeek, type CurrentWeekResult } from "./currentWeek";
 import ThisWeek from "./ThisWeek";
 import Prepare from "./Prepare";
 import ReadyReview from "./ReadyReview";
 import Teach from "./Teach";
+import Journal from "./Journal";
 import "./teacherprep.css";
 
-type View = "this-week" | "prepare" | "review" | "teach";
+type View = "this-week" | "prepare" | "review" | "teach" | "reflect";
 
 export default function TeacherPrepApp() {
   const sharedStore = useMemo(() => new SharedStore(), []);
@@ -18,8 +20,26 @@ export default function TeacherPrepApp() {
   const [shared, setShared] = useState(() => sharedStore.load());
   const [privateState, setPrivateState] = useState(() => privateStore.load());
   const [view, setView] = useState<View>("this-week");
+  const [currentWeek, setCurrentWeek] = useState<CurrentWeekResult | null>(null);
 
-  const lesson = ILLUSTRATIVE_LESSON;
+  useEffect(() => {
+    let cancelled = false;
+    resolveCurrentWeek().then((result) => {
+      if (!cancelled) setCurrentWeek(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // This Week shows the validated current lesson when the official source
+  // verified, and the labeled fixture otherwise. Once preparation starts, the
+  // lesson is pinned into the shared store so Prepare/Teach never shift
+  // underneath the teacher.
+  const resolvedLesson: WeeklyLesson =
+    currentWeek?.validated === true ? lessonFromCurrentWeek(currentWeek.lesson) : ILLUSTRATIVE_LESSON;
+  const lesson: WeeklyLesson = shared.prep ? (shared.lesson ?? ILLUSTRATIVE_LESSON) : resolvedLesson;
+
   const privateMaterial: PrivateMaterial = privateState.material ?? { lessonId: lesson.id, notes: [] };
 
   function saveShared(next: typeof shared) {
@@ -34,7 +54,7 @@ export default function TeacherPrepApp() {
   }
 
   function startPreparation() {
-    if (!shared.prep) saveShared({ ...shared, prep: createPrepDoc(lesson) });
+    if (!shared.prep) saveShared({ ...shared, prep: createPrepDoc(resolvedLesson), lesson: resolvedLesson });
     setView("prepare");
   }
 
@@ -88,6 +108,7 @@ export default function TeacherPrepApp() {
       {view === "this-week" && (
         <ThisWeek
           lesson={lesson}
+          currentWeek={currentWeek}
           prep={shared.prep}
           activeSnapshot={shared.activeSnapshot}
           onStartPreparation={startPreparation}
@@ -119,7 +140,7 @@ export default function TeacherPrepApp() {
       )}
 
       {view === "teach" && shared.activeSnapshot && (
-        <Teach snapshot={shared.activeSnapshot} onEndLesson={() => setView("this-week")} />
+        <Teach snapshot={shared.activeSnapshot} onEndLesson={() => setView("reflect")} />
       )}
       {view === "teach" && !shared.activeSnapshot && (
         <section className="tp-screen">
@@ -127,6 +148,21 @@ export default function TeacherPrepApp() {
           <button type="button" className="tp-primary" onClick={() => setView("this-week")}>
             Back to This Week
           </button>
+        </section>
+      )}
+
+      {view === "reflect" && (
+        <section className="tp-screen" aria-labelledby="tp-reflect-heading">
+          <h1 id="tp-reflect-heading">After class</h1>
+          <p className="tp-hint">Entirely optional. A quiet moment for your own reflections.</p>
+          <section className="tp-private">
+            <Journal material={privateMaterial} context="after-teach" onUpdate={savePrivate} />
+          </section>
+          <div className="tp-actions">
+            <button type="button" className="tp-primary" onClick={() => setView("this-week")}>
+              Done
+            </button>
+          </div>
         </section>
       )}
 
