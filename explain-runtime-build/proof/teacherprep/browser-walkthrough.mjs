@@ -129,15 +129,28 @@ await assert(teachReplaced.includes("EDITED AFTER SNAPSHOT"), "replacing the sna
 
 await assert(externalRequests.length === 0, `no external network requests (saw: ${externalRequests.join(", ") || "none"})`);
 
-// Companion untouched at other paths
+// Root is the product selector; Companion lives at /companion/prototype.
 await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await assert(
+  await page.getByRole("link", { name: /LDS Teacher Preparation/ }).isVisible(),
+  "root selector offers a labeled Teacher Preparation entry"
+);
+await page.screenshot({ path: OUT + "08-root-selector-phone.png" });
+await page.getByRole("link", { name: /LDS Teacher Preparation/ }).click();
+await assert(
+  await page.getByRole("heading", { name: "This Week" }).isVisible(),
+  "selector entry opens This Week"
+);
+await page.goto(`${BASE}/companion/prototype`, { waitUntil: "networkidle" });
 const companionVisible = await page.locator(".companion-shell").count();
-await assert(companionVisible > 0, "Companion still renders at /");
+await assert(companionVisible > 0, "Companion still renders at /companion/prototype");
 
 // ---------- Tablet width ----------
 // Same context as the phone flow so storage (prep + snapshot) carries over.
 const tabPage = await phone.newPage();
 await tabPage.setViewportSize({ width: 1024, height: 768 });
+await tabPage.goto(`${BASE}/`, { waitUntil: "networkidle" });
+await tabPage.screenshot({ path: OUT + "09-root-selector-tablet.png" });
 await tabPage.goto(`${BASE}/teacher`, { waitUntil: "networkidle" });
 await tabPage.screenshot({ path: OUT + "06-this-week-tablet.png", fullPage: true });
 await tabPage.getByRole("button", { name: "Continue Preparation" }).click();

@@ -1,3 +1,4 @@
-# Companion v1.1 SPA: every path serves the Companion app shell.
+# SPA: every path serves the app shell; src/routeGate.ts picks the surface
+# (/teacher → Teacher Preparation, / → selector, everything else → Companion).
 # ExplainIT routes are gone from this app (quarantined; see /quarantine).
 /*   /index.html   200

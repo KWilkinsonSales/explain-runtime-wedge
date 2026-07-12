@@ -1,5 +1,15 @@
 # Explain Runtime Wedge v0.1
 
+## Deployment front doors
+
+Three surfaces share this build (routing in `src/routeGate.ts`):
+
+- `/teacher` — **LDS Teacher Preparation** (This Week · Prepare · Teach); see
+  `src/teacherprep/README.md`. Production review URL:
+  https://companion-prototype-erw.netlify.app/teacher
+- `/` — a product selector linking to both surfaces.
+- Every other path — Companion v1.1, unchanged (documented below).
+
 Deployable reference build for the frozen Explain ADL Founder Envoy Mission.
 
 ## What is implemented

@@ -2,16 +2,25 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import CompanionPrototypeRoute from "./prototype/CompanionPrototypeRoute";
 import TeacherPrepRoute from "./teacherprep/TeacherPrepRoute";
+import ProductSelector from "./ProductSelector";
 import { TEACHER_PREP_ENABLED } from "./teacherprep/featureFlag";
+import { resolveSurface } from "./routeGate";
 
-// Companion v1.1 remains the app everywhere ("/", "/companion",
-// "/companion/prototype", ?view=teleprompter) with one isolated exception:
-// the LDS Teacher Preparation surface at exactly "/teacher" (and subpaths),
-// gated by TEACHER_PREP_ENABLED. ExplainIT stays quarantined; see
+// Three surfaces share this deployment (see routeGate.ts):
+// "/teacher" → LDS Teacher Preparation, "/" → product selector, everything
+// else — including /companion/prototype and ?view=teleprompter — renders
+// Companion v1.1 unchanged. ExplainIT stays quarantined; see
 // /quarantine/explainit.
-const path = window.location.pathname;
-const isTeacherPrep = TEACHER_PREP_ENABLED && (path === "/teacher" || path.startsWith("/teacher/"));
+const surface = resolveSurface(window.location.pathname, TEACHER_PREP_ENABLED);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>{isTeacherPrep ? <TeacherPrepRoute /> : <CompanionPrototypeRoute />}</React.StrictMode>
+  <React.StrictMode>
+    {surface === "teacher" ? (
+      <TeacherPrepRoute />
+    ) : surface === "selector" ? (
+      <ProductSelector />
+    ) : (
+      <CompanionPrototypeRoute />
+    )}
+  </React.StrictMode>
 );

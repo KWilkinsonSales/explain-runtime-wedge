@@ -3,8 +3,24 @@
 Filed for founder review per the 2026-07-10 Final Canon Map & Build Lock,
 UI Execution Amendment, and Prototype v1 Bounded Corrections.
 
-Date: 2026-07-11 · Surface: `/teacher` in `explain-runtime-build` ·
+Date: 2026-07-11, amended 2026-07-12 · Surface: `/teacher` in `explain-runtime-build` ·
 Feature flag: `TEACHER_PREP_ENABLED` (`src/teacherprep/featureFlag.ts`)
+
+## Production review URL
+
+**https://companion-prototype-erw.netlify.app/teacher**
+
+That exact URL opens the LDS Teacher Preparation **This Week** screen; Companion
+never appears on it. The deployment root (`/`) shows a product selector with a
+labeled **LDS Teacher Preparation** entry; every other path still renders
+Companion, including `/companion/prototype`.
+
+Deployment note (verified via the Netlify API on 2026-07-12): production was
+serving deploy `6a51e98b90bebb00080ebc11` — commit `bd22814`, which contains the
+merged Teacher Prep implementation — but that deploy is a *PR preview that was
+manually published to production*. Manually publishing a deploy pauses Netlify's
+auto-publishing, so after merging front-door changes, confirm in the Netlify UI
+(Deploys → "Start auto publishing") that main deploys go live again.
 
 ## Changed files
 
@@ -32,9 +48,12 @@ Verification follow-up (this change):
 All commands run in `explain-runtime-build/`:
 
 - `npm run typecheck` — clean (tsc --noEmit, strict).
-- `npm run test` — **9 files, 88 tests, 88 passed** (5 teacherPrep suites plus the 4 pre-existing Companion suites, untouched).
-- `npm run build` — production build succeeds (37 modules, 233 kB JS / 13.6 kB CSS).
-- `node proof/teacherprep/browser-walkthrough.mjs` against `npm run dev` — **21/21 checks passed** in real Chromium at 390×844 and 1024×768.
+- `npm run test` — **10 files, 92 tests, 92 passed** (5 teacherPrep suites, the front-door
+  route-gate suite, plus the 4 pre-existing Companion suites, untouched).
+- `npm run build` — production build succeeds (233 kB JS / 14.4 kB CSS).
+- `node proof/teacherprep/browser-walkthrough.mjs` against the production build
+  (`vite preview`) — **23/23 checks passed** in real Chromium at 390×844 and 1024×768,
+  including the root selector and the untouched Companion surface.
 
 Required proofs and where they are pinned:
 
@@ -61,6 +80,8 @@ Required proofs and where they are pinned:
 4. `04-teach-phone.png` — Teach scripture card
 5. `05-neutral-phone.png` — Neutral Screen
 6. `06-this-week-tablet.png`, `07-teach-tablet.png` — tablet widths
+7. `08-root-selector-phone.png`, `09-root-selector-tablet.png` — the root product
+   selector with its labeled Teacher Preparation entry
 
 ## Known limitations
 
@@ -71,6 +92,9 @@ Required proofs and where they are pinned:
 - The walkthrough script drives a dev server; it is filed as proof, not wired into CI (repo CI does not build `explain-runtime-build`).
 
 ## Run instructions
+
+Live review needs no local setup: open
+**https://companion-prototype-erw.netlify.app/teacher** directly.
 
 ```bash
 cd explain-runtime-build
