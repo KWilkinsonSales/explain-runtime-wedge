@@ -61,6 +61,9 @@ export interface LessonBlock {
   // True when this block's text was deliberately promoted from private
   // material after explicit confirmation. Kept visible so it stays reversible.
   fromPrivate: boolean;
+  // Set when this block was deliberately promoted from Explore Approved
+  // Sources; carries the source's standing so its label stays visible.
+  sourceStanding?: "official" | "associated" | "external";
 }
 
 export interface PrepDoc {
@@ -97,7 +100,17 @@ export interface PrivateNote {
   text: string;
 }
 
+export interface JournalEntry {
+  id: string;
+  text: string;
+  createdAt: string;
+  context: "prepare" | "after-teach";
+}
+
 export interface PrivateMaterial {
   lessonId: string;
   notes: PrivateNote[];
+  // Journal / reflections. Device-local like everything else here; absent
+  // in older saved state, so consumers must treat it as optional.
+  journal?: JournalEntry[];
 }

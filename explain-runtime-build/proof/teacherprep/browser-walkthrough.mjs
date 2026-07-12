@@ -36,8 +36,8 @@ page.on("request", (req) => {
 await page.goto(`${BASE}/teacher`, { waitUntil: "networkidle" });
 await assert(await page.getByRole("heading", { name: "This Week" }).isVisible(), "This Week loads at /teacher");
 await assert(
-  await page.getByText("Illustrative — not current official lesson").isVisible(),
-  "illustrative label shown"
+  await page.getByText("Illustrative — official current lesson could not be verified.").isVisible(),
+  "labeled fixture fallback shown when the official current lesson is not verified"
 );
 await assert(
   await page.getByText("Independent study tool · Not affiliated").isVisible(),
@@ -49,7 +49,7 @@ await page.screenshot({ path: OUT + "01-this-week-phone.png", fullPage: true });
 await page.getByRole("button", { name: "Start Preparation" }).click();
 await assert(await page.getByRole("heading", { name: "Prepare" }).isVisible(), "Prepare opens");
 await assert(
-  await page.getByText("Private · stays on this device · not uploaded or shared").isVisible(),
+  await page.getByText("Private · stays on this device · not uploaded or shared").first().isVisible(),
   "private microcopy visible"
 );
 
@@ -84,6 +84,25 @@ const stores = await page.evaluate(() => ({
 await assert(!stores.shared.includes("Personal impression"), "private text absent from shared store");
 await assert(stores.priv.includes("Personal impression"), "private text present in private store only");
 
+// 5b. Explore Approved Sources: official first, external needs confirmation
+await page.getByText("Explore Approved Sources").click();
+await assert(
+  await page.getByRole("button", { name: "Official" }).getAttribute("aria-pressed") === "true",
+  "official source class is on by default"
+);
+await page.getByRole("button", { name: "Labeled external context" }).click();
+await page.screenshot({ path: OUT + "10-explore-sources-phone.png", fullPage: false });
+await page.getByRole("button", { name: "Promote to Class…" }).last().click();
+await assert(
+  await page.getByText(/Add this labeled external context item/).isVisible(),
+  "external promotion asks for explicit confirmation"
+);
+await page.getByRole("button", { name: "Yes, add it" }).click();
+await assert(
+  await page.getByText(/· labeled external context/).first().isVisible(),
+  "promoted external block is visibly labeled with its standing"
+);
+
 // 6. Review → Ready for Class
 await reviewButton.click();
 await assert(await page.getByRole("heading", { name: "Review" }).isVisible(), "Review screen shows chosen content");
@@ -107,8 +126,21 @@ await assert(!neutralText.includes("countenances"), "Neutral Screen removes less
 await page.screenshot({ path: OUT + "05-neutral-phone.png" });
 await page.getByRole("button", { name: "Resume lesson" }).click();
 
-// Snapshot stability: edit Prepare, confirm Teach unchanged until replaced
+// End Lesson lands on the optional device-local reflection screen.
 await page.getByRole("button", { name: "End Lesson" }).click();
+await assert(await page.getByRole("heading", { name: "After class" }).isVisible(), "reflection screen offered after Teach");
+await page.getByLabel("Reflections after class").fill("Private reflection: the quiet student spoke today.");
+await page.waitForTimeout(1000);
+const journalStores = await page.evaluate(() => ({
+  shared: localStorage.getItem("teacherprep.shared.v1") ?? "",
+  priv: localStorage.getItem("teacherprep.private.v1") ?? ""
+}));
+await assert(!journalStores.shared.includes("quiet student spoke"), "journal absent from shared store");
+await assert(journalStores.priv.includes("quiet student spoke"), "journal auto-saved into device-local store");
+await page.screenshot({ path: OUT + "11-reflect-phone.png", fullPage: true });
+await page.getByRole("button", { name: "Done" }).click();
+
+// Snapshot stability: edit Prepare, confirm Teach unchanged until replaced
 await page.getByRole("button", { name: "Continue Preparation" }).click();
 const anchorBox = page.getByLabel("Scripture anchor text");
 await anchorBox.fill("EDITED AFTER SNAPSHOT — must not appear in Teach yet.");
@@ -120,6 +152,7 @@ await assert(teachAfterEdit.includes("countenances"), "Teach still shows the ori
 
 // Deliberate replacement updates Teach
 await page.getByRole("button", { name: "End Lesson" }).click();
+await page.getByRole("button", { name: "Done" }).click();
 await page.getByRole("button", { name: "Continue Preparation" }).click();
 await page.getByRole("button", { name: "Review → Ready for Class" }).click();
 await page.getByRole("button", { name: "Replace class snapshot" }).click();

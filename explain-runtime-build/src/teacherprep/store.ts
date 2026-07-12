@@ -1,4 +1,4 @@
-import type { ClassSnapshot, PrepDoc, PrivateMaterial } from "./types";
+import type { ClassSnapshot, PrepDoc, PrivateMaterial, WeeklyLesson } from "./types";
 
 // Two stores, two keys, one hard wall.
 //
@@ -36,6 +36,11 @@ function defaultBackend(): KeyValueBackend {
 export interface SharedState {
   prep: PrepDoc | null;
   activeSnapshot: ClassSnapshot | null;
+  // The lesson the prep document was created from (validated current week
+  // or the labeled fixture), pinned so Prepare/Teach never shift under the
+  // teacher when the resolved current week later changes. Absent in older
+  // saved state.
+  lesson?: WeeklyLesson | null;
 }
 
 export interface PrivateState {

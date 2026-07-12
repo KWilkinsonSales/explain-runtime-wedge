@@ -30,6 +30,7 @@ function escapeHtml(text: string): string {
 }
 
 const BASE_CSS = `
+  @page { margin: 1.6cm; }
   body { font-family: Georgia, "Times New Roman", serif; color: #1c1c1c; margin: 2rem; }
   h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
   h2 { font-size: 1.15rem; margin: 1.2rem 0 0.3rem; }
@@ -42,6 +43,7 @@ const BASE_CSS = `
 `;
 
 const LARGE_PRINT_CSS = `
+  @page { margin: 1.6cm; }
   body { font-family: Georgia, "Times New Roman", serif; color: #111; margin: 2rem; }
   .card { page-break-after: always; display: flex; flex-direction: column; justify-content: center; min-height: 80vh; }
   h1 { font-size: 2.4rem; }

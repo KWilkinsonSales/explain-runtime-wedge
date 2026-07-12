@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { ClassSnapshot, PrepDoc, PrivateMaterial, WeeklyLesson } from "./types";
 import { promotedBlocks } from "./prep";
+import { SOURCE_STANDING_LABEL } from "./sources";
 import { EXPORT_PRESETS, buildExportHtml, openPrintWindow, type ExportPreset } from "./exportPdf";
 
 // Review → Ready for Class. Making the snapshot confirms the teacher's
@@ -32,8 +33,17 @@ export default function ReadyReview({
 
   function exportPreset(preset: ExportPreset) {
     if (!activeSnapshot) return;
+    // Journal entries ride along only under the same explicit Teacher
+    // Packet opt-in as private notes; they share the PrivateNote shape.
+    const journalAsNotes = (privateMaterial.journal ?? []).map((entry) => ({
+      id: entry.id,
+      label: entry.context === "prepare" ? "Journal (while preparing)" : "Journal (after class)",
+      text: entry.text
+    }));
     const includePrivateNotes =
-      preset === "teacher-packet" && includePrivateInPacket ? privateMaterial.notes : undefined;
+      preset === "teacher-packet" && includePrivateInPacket
+        ? [...privateMaterial.notes, ...journalAsNotes]
+        : undefined;
     const html = buildExportHtml(activeSnapshot, preset, {
       includePrivateNotes,
       illustrative: lesson.illustrative
@@ -55,6 +65,9 @@ export default function ReadyReview({
             <h3>
               {block.title}
               {block.fromPrivate && <span className="tp-from-private"> · shared from my notes</span>}
+              {block.sourceStanding && block.sourceStanding !== "official" && (
+                <span className="tp-from-private"> · {SOURCE_STANDING_LABEL[block.sourceStanding].toLowerCase()}</span>
+              )}
             </h3>
             <p>{block.body}</p>
             {block.scriptureRefs.length > 0 && <p className="tp-anchors">{block.scriptureRefs.join("; ")}</p>}
@@ -84,9 +97,15 @@ export default function ReadyReview({
 
       {activeSnapshot && (
         <section className="tp-export" aria-labelledby="tp-export-heading">
-          <h2 id="tp-export-heading">Print / PDF</h2>
-          <p className="tp-hint">Made from the current class snapshot. Private notes are left out unless you ask.</p>
+          <h2 id="tp-export-heading">Print / Save Lesson</h2>
+          <p className="tp-hint">
+            Made from the current class snapshot; private material is left out unless you ask. Each button opens your
+            device's print view — print now on paper, or choose “Save as PDF” there to keep a digital copy.
+          </p>
           <div className="tp-actions">
+            <button type="button" className="tp-primary" onClick={() => exportPreset("teacher-packet")}>
+              Print now
+            </button>
             {EXPORT_PRESETS.map((preset) => (
               <button key={preset.id} type="button" className="tp-secondary" onClick={() => exportPreset(preset.id)}>
                 {preset.label}
@@ -99,7 +118,10 @@ export default function ReadyReview({
               checked={includePrivateInPacket}
               onChange={(event) => setIncludePrivateInPacket(event.target.checked)}
             />
-            <span>Also print my private notes in the Teacher Packet (they stay off every other export)</span>
+            <span>
+              Also include my private notes and journal in the Teacher Packet — for my eyes only (they stay off every
+              other export)
+            </span>
           </label>
         </section>
       )}

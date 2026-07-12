@@ -1,4 +1,5 @@
 import type { LessonBlock, PrepDoc, PrivateNote, WeeklyLesson } from "./types";
+import { SOURCE_STANDING_LABEL, type ApprovedSource } from "./sources";
 
 // Prepare-state logic. Pure functions over PrepDoc so every rule here is
 // provable in node tests: per-item reversible promotion, the explicit
@@ -86,6 +87,40 @@ export function promotePrivateNote(
     scriptureRefs: [],
     promoted: true,
     fromPrivate: true
+  };
+  return { ...doc, blocks: [...doc.blocks, block] };
+}
+
+export class SourcePromotionNotConfirmedError extends Error {
+  constructor() {
+    super("Promoting associated or external material requires explicit confirmation.");
+    this.name = "SourcePromotionNotConfirmedError";
+  }
+}
+
+// Explore Approved Sources → class content only through this deliberate
+// call. Official items promote on a deliberate tap; associated/external
+// items additionally require confirmed: true so nothing outside the
+// official sources ever slips into Teach silently. The resulting block is
+// visible, editable, labeled with its standing, and reversible like any
+// other block.
+export function promoteSourceToClass(
+  doc: PrepDoc,
+  source: ApprovedSource,
+  options: { confirmed?: boolean } = {}
+): PrepDoc {
+  if (source.standing !== "official" && options.confirmed !== true) {
+    throw new SourcePromotionNotConfirmedError();
+  }
+  const block: LessonBlock = {
+    id: nextId("block"),
+    kind: source.standing === "official" ? "scripture" : "explanation",
+    title: `${source.title} · ${SOURCE_STANDING_LABEL[source.standing]}`,
+    body: source.relevanceNote,
+    scriptureRefs: [],
+    promoted: true,
+    fromPrivate: false,
+    sourceStanding: source.standing
   };
   return { ...doc, blocks: [...doc.blocks, block] };
 }

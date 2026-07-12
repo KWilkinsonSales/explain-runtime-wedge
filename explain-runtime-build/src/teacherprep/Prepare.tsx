@@ -1,7 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { PrepDoc, PrivateMaterial, PrivateNote, WeeklyLesson } from "./types";
 import { PRIVATE_MICROCOPY } from "./fixture";
-import { editBlockBody, promotePrivateNote, promotedBlocks, setBlockPromoted, setIntent } from "./prep";
+import {
+  editBlockBody,
+  promotePrivateNote,
+  promoteSourceToClass,
+  promotedBlocks,
+  setBlockPromoted,
+  setIntent
+} from "./prep";
+import { SOURCE_STANDING_LABEL, insightNoteFromSource, type ApprovedSource } from "./sources";
+import ExploreSources from "./ExploreSources";
+import Journal from "./Journal";
 
 interface PrepareProps {
   lesson: WeeklyLesson;
@@ -70,6 +80,21 @@ export default function Prepare({ lesson, prep, privateMaterial, onUpdatePrep, o
     });
   }
 
+  function addInsight(source: ApprovedSource, insight: string) {
+    onUpdatePrivate({ ...privateMaterial, notes: [...privateMaterial.notes, insightNoteFromSource(source, insight)] });
+  }
+
+  // ExploreSources shows its own inline confirmation for associated and
+  // external items before calling this, so the deliberate choice has
+  // already been made by the time we promote.
+  function promoteSource(source: ApprovedSource) {
+    onUpdatePrep((current) => promoteSourceToClass(current, source, { confirmed: true }));
+    showToast({
+      message: `${SOURCE_STANDING_LABEL[source.standing]} item added to class content. Remove it above at any time.`,
+      undo: () => setToast(null)
+    });
+  }
+
   const promotedCount = promotedBlocks(prep).length;
   const intentReady = prep.intent.trim().length > 0;
 
@@ -109,6 +134,9 @@ export default function Prepare({ lesson, prep, privateMaterial, onUpdatePrep, o
               <h3>
                 {block.title}
                 {block.fromPrivate && <span className="tp-from-private"> · shared from my notes</span>}
+                {block.sourceStanding && block.sourceStanding !== "official" && (
+                  <span className="tp-from-private"> · {SOURCE_STANDING_LABEL[block.sourceStanding].toLowerCase()}</span>
+                )}
               </h3>
               <button
                 type="button"
@@ -147,6 +175,8 @@ export default function Prepare({ lesson, prep, privateMaterial, onUpdatePrep, o
         </ul>
         <p className="tp-hint">Contextual material. Official sources on This Week come first.</p>
       </details>
+
+      <ExploreSources lesson={lesson} onAddInsight={addInsight} onPromote={promoteSource} />
 
       <section className="tp-private" aria-labelledby="tp-private-heading">
         <h2 id="tp-private-heading">My notes</h2>
@@ -193,6 +223,10 @@ export default function Prepare({ lesson, prep, privateMaterial, onUpdatePrep, o
             Save note on this device
           </button>
         </div>
+        <details className="tp-journal-drawer">
+          <summary>Journal / reflections (optional)</summary>
+          <Journal material={privateMaterial} context="prepare" onUpdate={onUpdatePrivate} />
+        </details>
       </section>
 
       <div className="tp-review-bar">
