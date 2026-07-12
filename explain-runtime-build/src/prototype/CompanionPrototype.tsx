@@ -13,7 +13,7 @@ import {
   type SpeechRecognitionWindowLike,
   type VoiceUnavailableReason
 } from "./companionRuntime";
-import { runAdmissionRail, runPasteTextRail, type AdmissionReceipt } from "./admissionSourceAdapter";
+import { ResponseEngine, type EngineResponse, type EngineState } from "./responseEngine";
 import {
   appendSegment,
   createTranscriptBuffer,
@@ -45,6 +45,12 @@ const STATE_BADGE_CLASS: Record<CompanionRuntimeState, string> = {
   ERROR: "unavailable"
 };
 
+const ENGINE_STATE_LABEL: Record<EngineState, string> = {
+  ready: "Ready",
+  thinking: "Thinking…",
+  error: "Error — fallback shown"
+};
+
 const IDLE_DIAGNOSTICS: LiveDiagnostics = {
   provider: "none",
   providerConnected: false,
@@ -57,7 +63,6 @@ const IDLE_DIAGNOSTICS: LiveDiagnostics = {
 export default function CompanionPrototype() {
   usePrototypeHeadTags();
 
-  const sessionId = useMemo(() => `proto-${Math.random().toString(36).slice(2, 8)}`, []);
   const startedAt = useMemo(() => new Date(), []);
   const getUserMediaSupported = useMemo(() => isGetUserMediaSupported(navigator), []);
   const speechRecognitionSupported = useMemo(
@@ -75,17 +80,45 @@ export default function CompanionPrototype() {
   const [liveStatusDetail, setLiveStatusDetail] = useState<string | null>(null);
   const [liveDiagnostics, setLiveDiagnostics] = useState<LiveDiagnostics>(IDLE_DIAGNOSTICS);
   const [transcriptBuffer, setTranscriptBuffer] = useState<TranscriptBuffer>(() => createTranscriptBuffer());
-  const [liveReceipt, setLiveReceipt] = useState<AdmissionReceipt | null>(null);
+
+  // One governed response loop: current rendered answer + engine state.
+  const engineRef = useRef<ResponseEngine | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [engineState, setEngineState] = useState<EngineState>("ready");
+  const [currentResponse, setCurrentResponse] = useState<EngineResponse | null>(null);
+  const [holding, setHolding] = useState(false);
+  const holdingRef = useRef(false);
+  const [copiedAt, setCopiedAt] = useState<string | null>(null);
 
   const [activeIntentId, setActiveIntentId] = useState<IntentId | null>(null);
   const [manualLine, setManualLine] = useState("");
   const [broadcastedAt, setBroadcastedAt] = useState<string | null>(null);
   const [textDraft, setTextDraft] = useState("");
-  const [sentMessages, setSentMessages] = useState<AdmissionReceipt[]>([]);
+  const [sentResponses, setSentResponses] = useState<EngineResponse[]>([]);
 
   const streamRef = useRef<MediaStream | null>(null);
   const liveHandleRef = useRef<LiveHandle | null>(null);
   const textInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // One session per activation; a new activation gets a new engine.
+  function ensureEngine(): ResponseEngine {
+    if (engineRef.current && !engineRef.current.isClosed) return engineRef.current;
+    const engine = new ResponseEngine(undefined, {
+      onState: (state) => setEngineState(state),
+      onResponse: (response) => {
+        setCurrentResponse(response);
+        // Secondary renderer mirrors the same governed output.
+        publishTeleprompter({
+          text: response.speak,
+          intentId: null,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    });
+    engineRef.current = engine;
+    setSessionId(engine.sessionId);
+    return engine;
+  }
 
   function stopLiveRail() {
     liveHandleRef.current?.stop();
@@ -94,20 +127,10 @@ export default function CompanionPrototype() {
 
   function handleLiveSegment(segmentText: string, isFinal: boolean) {
     setTranscriptBuffer((buffer) => appendSegment(buffer, { text: segmentText, isFinal }));
-
     if (!isFinal) return;
-
-    const receipt = runAdmissionRail({
-      source_provider: "browser_mic",
-      session_id: sessionId,
-      text_chunk: segmentText
-    });
-    setLiveReceipt(receipt);
-    publishTeleprompter({
-      text: receipt.output.speak,
-      intentId: null,
-      updatedAt: new Date().toISOString()
-    });
+    // Hold pauses guidance without stopping listening or transcript evidence.
+    if (holdingRef.current) return;
+    void ensureEngine().admitAndExecute(segmentText, "browser_mic");
   }
 
   async function startLiveRail(stream: MediaStream) {
@@ -142,6 +165,7 @@ export default function CompanionPrototype() {
       streamRef.current = stream;
       setMicPermission("granted");
       setLastMicError(null);
+      ensureEngine();
       setRuntimeState("LISTENING");
       // Live transcription starts after the mic is granted; failure here never
       // revokes the Listening state — it degrades to fallback/Text Mode.
@@ -161,6 +185,7 @@ export default function CompanionPrototype() {
       liveHandleRef.current = null;
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+      engineRef.current?.close();
     };
   }, []);
 
@@ -172,6 +197,7 @@ export default function CompanionPrototype() {
 
   function enterTextMode() {
     stopLiveRail();
+    ensureEngine();
     setRuntimeState("TEXT_MODE");
   }
 
@@ -184,18 +210,64 @@ export default function CompanionPrototype() {
     requestMicrophoneAccess();
   }
 
-  function sendTextMessage() {
+  // Explicit clean close: mic released, engine closed, transcript cleared.
+  // The next activation starts a fresh session.
+  function endSession() {
+    stopLiveRail();
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    engineRef.current?.close();
+    engineRef.current = null;
+    setSessionId(null);
+    setCurrentResponse(null);
+    setSentResponses([]);
+    setTranscriptBuffer(createTranscriptBuffer());
+    setLiveDiagnostics(IDLE_DIAGNOSTICS);
+    setLiveStatus("idle");
+    setLiveStatusDetail(null);
+    setEngineState("ready");
+    setHolding(false);
+    holdingRef.current = false;
+    setActiveIntentId(null);
+    setRuntimeState("IDLE");
+  }
+
+  function toggleHold() {
+    holdingRef.current = !holdingRef.current;
+    setHolding(holdingRef.current);
+  }
+
+  async function copySpeak() {
+    if (!speakLine) return;
+    try {
+      await navigator.clipboard.writeText(speakLine);
+      setCopiedAt(new Date().toLocaleTimeString());
+    } catch {
+      setCopiedAt(null);
+    }
+  }
+
+  function repeatSpeak() {
+    publishTeleprompter({
+      text: speakLine,
+      intentId: activeIntentId,
+      updatedAt: new Date().toISOString()
+    });
+    setBroadcastedAt(new Date().toLocaleTimeString());
+  }
+
+  async function sendTextMessage() {
     const message = textDraft.trim();
     if (!message) return;
-    const receipt = runPasteTextRail({ session_id: sessionId, text_chunk: message });
-    setSentMessages((messages) => [...messages, receipt]);
     setTextDraft("");
+    const response = await ensureEngine().admitAndExecute(message, "paste_text");
+    if (response) setSentResponses((responses) => [...responses, response]);
   }
 
   function handleTextDraftKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      sendTextMessage();
+      void sendTextMessage();
     }
   }
 
@@ -203,11 +275,11 @@ export default function CompanionPrototype() {
   const speakLine =
     manualLine.trim().length > 0
       ? manualLine
-      : liveReceipt?.output.speak ??
+      : currentResponse?.speak ??
         activeIntent?.speak ??
         "Speak normally — live guidance appears here as Companion hears you.";
   const steerLine =
-    liveReceipt?.output.steer ?? activeIntent?.steer ?? "Waiting for live transcript before offering direction.";
+    currentResponse?.steer ?? activeIntent?.steer ?? "Waiting for live transcript before offering direction.";
 
   const liveTranscriptText = transcriptBufferText(transcriptBuffer);
   const liveTranscriptTail =
@@ -226,7 +298,7 @@ export default function CompanionPrototype() {
 
   return (
     <div className="companion-shell">
-      <div className="companion-banner">COMPANION v1.1 · GOVERNED ASSIST — HUMAN REMAINS FINAL AUTHORITY</div>
+      <div className="companion-banner">COMPANION v1.2 · GOVERNED ASSIST — HUMAN REMAINS FINAL AUTHORITY</div>
 
       <header className="companion-header">
         <p className="eyebrow">Companion ON</p>
@@ -234,8 +306,9 @@ export default function CompanionPrototype() {
         <div className={`state-badge ${STATE_BADGE_CLASS[runtimeState]}`} aria-live="polite">
           <span className="state-dot" />
           {STATE_LABEL[runtimeState]}
-          {runtimeState === "LISTENING" && liveDiagnostics.provider !== "none" && (
-            <>&nbsp;· {liveDiagnostics.provider === "deepgram" ? "Deepgram live" : "Web Speech fallback"}</>
+          {runtimeState === "LISTENING" && holding && <>&nbsp;· On hold</>}
+          {(runtimeState === "LISTENING" || runtimeState === "TEXT_MODE") && (
+            <>&nbsp;· {ENGINE_STATE_LABEL[engineState]}</>
           )}
         </div>
       </header>
@@ -300,15 +373,29 @@ export default function CompanionPrototype() {
           </nav>
 
           <section className="card-stack">
-            <article className="companion-card">
+            <article className="companion-card speak-card">
               <h2>Speak</h2>
               <p>{speakLine}</p>
+              {currentResponse?.fallback && (
+                <small className="live-status-detail">Fallback line — the provider failed for this utterance.</small>
+              )}
             </article>
 
-            <article className="companion-card">
-              <h2>Steer</h2>
+            <details className="steer-details">
+              <summary>Steer</summary>
               <p>{steerLine}</p>
-            </article>
+            </details>
+
+            <div className="companion-controls" role="group" aria-label="Response controls">
+              <button className="secondary" onClick={copySpeak}>Copy</button>
+              <button className="secondary" onClick={repeatSpeak}>Repeat</button>
+              <button className="secondary" aria-pressed={holding} onClick={toggleHold}>
+                {holding ? "Resume" : "Hold"}
+              </button>
+              <button className="secondary" onClick={enterTextMode}>Text Mode</button>
+              <button className="end-session" onClick={endSession}>End</button>
+            </div>
+            {copiedAt && <small className="live-status-detail">Copied at {copiedAt}.</small>}
 
             <article className="companion-card">
               <h2>Live transcript</h2>
@@ -316,41 +403,89 @@ export default function CompanionPrototype() {
               {liveStatusDetail && <small className="live-status-detail">{liveStatusDetail}</small>}
             </article>
 
-            <article className="companion-card">
-              <h2>Situation</h2>
-              <dl className="situation-grid">
-                <dt>Session</dt>
-                <dd>{sessionId}</dd>
-                <dt>State</dt>
-                <dd>{STATE_LABEL[runtimeState]}</dd>
-                <dt>Intent</dt>
-                <dd>{activeIntent ? `${activeIntent.word} — ${activeIntent.label}` : "None selected"}</dd>
-                <dt>Started</dt>
-                <dd>{startedAt.toLocaleTimeString()}</dd>
-              </dl>
-            </article>
+            <details className="diagnostics-disclosure">
+              <summary>Details &amp; diagnostics</summary>
 
-            <article className="companion-card teleprompter-panel">
-              <h2>Mac teleprompter sync</h2>
-              <p>Live SPEAK lines broadcast automatically. Override below if needed.</p>
-              <textarea
-                value={manualLine}
-                onChange={(event) => setManualLine(event.target.value)}
-                placeholder="Type a line to send to the teleprompter…"
-              />
-              <button onClick={broadcastToTeleprompter}>Broadcast to teleprompter</button>
-              {broadcastedAt && <small>Broadcast at {broadcastedAt}.</small>}
-              <small>
-                Open <a href="/?view=teleprompter" target="_blank" rel="noreferrer">
-                  this address with ?view=teleprompter
-                </a>{" "}
-                in another tab or window on the same browser to see it sync live.
-              </small>
-            </article>
+              <article className="companion-card">
+                <h2>Situation</h2>
+                <dl className="situation-grid">
+                  <dt>Session</dt>
+                  <dd>{sessionId ?? "—"}</dd>
+                  <dt>State</dt>
+                  <dd>{STATE_LABEL[runtimeState]}</dd>
+                  <dt>Intent</dt>
+                  <dd>{activeIntent ? `${activeIntent.word} — ${activeIntent.label}` : "None selected"}</dd>
+                  <dt>Started</dt>
+                  <dd>{startedAt.toLocaleTimeString()}</dd>
+                  <dt>Last event</dt>
+                  <dd>{currentResponse?.eventId ?? "None yet"}</dd>
+                </dl>
+              </article>
 
-            <article className="companion-card">
-              <button className="secondary" onClick={enterTextMode}>Enter Text Mode</button>
-            </article>
+              <article className="companion-card teleprompter-panel">
+                <h2>Mac teleprompter sync</h2>
+                <p>Live SPEAK lines broadcast automatically. Override below if needed.</p>
+                <textarea
+                  value={manualLine}
+                  onChange={(event) => setManualLine(event.target.value)}
+                  placeholder="Type a line to send to the teleprompter…"
+                />
+                <button onClick={broadcastToTeleprompter}>Broadcast to teleprompter</button>
+                {broadcastedAt && <small>Broadcast at {broadcastedAt}.</small>}
+                <small>
+                  Open <a href="/?view=teleprompter" target="_blank" rel="noreferrer">
+                    this address with ?view=teleprompter
+                  </a>{" "}
+                  in another tab or window on the same browser to see it sync live.
+                </small>
+              </article>
+
+              <footer className="diagnostics-footer">
+                <div>
+                  <span>Mic Permission</span>
+                  <strong>{micPermission === "unknown" ? "Unknown" : micPermission === "granted" ? "Granted" : "Denied"}</strong>
+                </div>
+                <div>
+                  <span>Provider</span>
+                  <strong>
+                    {liveDiagnostics.provider === "none" ? "None" : liveDiagnostics.provider}
+                    {liveDiagnostics.providerConnected ? " · connected" : ""}
+                  </strong>
+                </div>
+                <div>
+                  <span>Transcript Receiving</span>
+                  <strong>{transcriptReceivingNow ? "Yes" : "No"}</strong>
+                </div>
+                <div>
+                  <span>Fallback Mode</span>
+                  <strong>{liveDiagnostics.fallbackMode ? "Yes" : "No"}</strong>
+                </div>
+                <div>
+                  <span>Last Segment</span>
+                  <strong>{liveDiagnostics.lastSegmentAt ? new Date(liveDiagnostics.lastSegmentAt).toLocaleTimeString() : "None"}</strong>
+                </div>
+                <div>
+                  <span>Live Status</span>
+                  <strong>{liveStatus}</strong>
+                </div>
+                <div>
+                  <span>getUserMedia</span>
+                  <strong>{getUserMediaSupported ? "Supported" : "Unsupported"}</strong>
+                </div>
+                <div>
+                  <span>SpeechRecognition (diagnostic fallback)</span>
+                  <strong>{speechRecognitionSupported ? "Supported" : "Unsupported"}</strong>
+                </div>
+                <div>
+                  <span>Current State</span>
+                  <strong>{runtimeState}</strong>
+                </div>
+                <div className="diagnostics-footer-wide">
+                  <span>Last Mic Error</span>
+                  <strong>{lastMicError ?? liveDiagnostics.lastError ?? "None"}</strong>
+                </div>
+              </footer>
+            </details>
           </section>
         </>
       )}
@@ -370,20 +505,23 @@ export default function CompanionPrototype() {
               autoFocus
             />
             <div className="text-mode-actions">
-              <button onClick={sendTextMessage} disabled={textDraft.trim().length === 0}>Send</button>
+              <button onClick={() => void sendTextMessage()} disabled={textDraft.trim().length === 0}>Send</button>
               <button className="secondary" onClick={backToVoice}>Back to Voice</button>
+              <button className="end-session" onClick={endSession}>End</button>
             </div>
-            {sentMessages.length > 0 && (
+            {sentResponses.length > 0 && (
               <ul className="text-mode-transcript">
-                {sentMessages.map((receipt, index) => (
-                  <li key={index} className="admission-receipt">
+                {sentResponses.map((response) => (
+                  <li key={response.eventId} className="admission-receipt">
                     <div className="admission-receipt-input">
-                      <span className={`event-type-tag ${receipt.event.event_type}`}>{receipt.event.event_type}</span>
-                      <span>{receipt.event.text_chunk}</span>
+                      <span className={`event-type-tag ${response.receipt?.event.event_type ?? "statement"}`}>
+                        {response.receipt?.event.event_type ?? "fallback"}
+                      </span>
+                      <span>{response.receipt?.event.text_chunk ?? ""}</span>
                     </div>
                     <div className="admission-receipt-output">
-                      <p><strong>Speak</strong> {receipt.output.speak}</p>
-                      <p><strong>Steer</strong> {receipt.output.steer}</p>
+                      <p><strong>Speak</strong> {response.speak}</p>
+                      <p><strong>Steer</strong> {response.steer}</p>
                     </div>
                   </li>
                 ))}
@@ -395,52 +533,6 @@ export default function CompanionPrototype() {
 
       <footer className="companion-footer">
         No autonomous decisions taken · Human remains final authority
-      </footer>
-
-      <footer className="diagnostics-footer">
-        <div>
-          <span>Mic Permission</span>
-          <strong>{micPermission === "unknown" ? "Unknown" : micPermission === "granted" ? "Granted" : "Denied"}</strong>
-        </div>
-        <div>
-          <span>Provider</span>
-          <strong>
-            {liveDiagnostics.provider === "none" ? "None" : liveDiagnostics.provider}
-            {liveDiagnostics.providerConnected ? " · connected" : ""}
-          </strong>
-        </div>
-        <div>
-          <span>Transcript Receiving</span>
-          <strong>{transcriptReceivingNow ? "Yes" : "No"}</strong>
-        </div>
-        <div>
-          <span>Fallback Mode</span>
-          <strong>{liveDiagnostics.fallbackMode ? "Yes" : "No"}</strong>
-        </div>
-        <div>
-          <span>Last Segment</span>
-          <strong>{liveDiagnostics.lastSegmentAt ? new Date(liveDiagnostics.lastSegmentAt).toLocaleTimeString() : "None"}</strong>
-        </div>
-        <div>
-          <span>Live Status</span>
-          <strong>{liveStatus}</strong>
-        </div>
-        <div>
-          <span>getUserMedia</span>
-          <strong>{getUserMediaSupported ? "Supported" : "Unsupported"}</strong>
-        </div>
-        <div>
-          <span>SpeechRecognition (diagnostic fallback)</span>
-          <strong>{speechRecognitionSupported ? "Supported" : "Unsupported"}</strong>
-        </div>
-        <div>
-          <span>Current State</span>
-          <strong>{runtimeState}</strong>
-        </div>
-        <div className="diagnostics-footer-wide">
-          <span>Last Mic Error</span>
-          <strong>{lastMicError ?? liveDiagnostics.lastError ?? "None"}</strong>
-        </div>
       </footer>
     </div>
   );

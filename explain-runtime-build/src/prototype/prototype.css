@@ -480,3 +480,91 @@ button.secondary {
   opacity: 0.55;
   line-height: 1.5;
 }
+
+/* ---- Companion v1.2: governed response loop UI ---- */
+
+.speak-card {
+  border-color: rgba(215, 181, 109, 0.55);
+}
+
+.speak-card p {
+  font-size: clamp(1.35rem, 4.5vw, 1.9rem);
+  line-height: 1.4;
+}
+
+.steer-details {
+  max-width: 640px;
+  margin: 0 auto;
+  width: calc(100% - 2.5rem);
+  border: 1px solid rgba(244, 240, 228, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.35rem 1.1rem;
+}
+
+.steer-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.steer-details p {
+  margin: 0.3rem 0 0.8rem;
+}
+
+.companion-controls {
+  max-width: 640px;
+  margin: 0 auto;
+  width: calc(100% - 2.5rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.companion-controls button {
+  min-height: 48px;
+  min-width: 48px;
+  font-size: 1rem;
+}
+
+.end-session {
+  border: 1px solid rgba(230, 140, 140, 0.6);
+  background: rgba(230, 140, 140, 0.12);
+  color: #f4dede;
+  border-radius: 10px;
+  min-height: 48px;
+  padding: 0.5rem 1.2rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.diagnostics-disclosure {
+  max-width: 640px;
+  margin: 0.5rem auto 0;
+  width: calc(100% - 2.5rem);
+  border: 1px solid rgba(244, 240, 228, 0.12);
+  border-radius: 14px;
+  padding: 0.35rem 1.1rem 0.8rem;
+  opacity: 0.92;
+}
+
+.diagnostics-disclosure summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: rgba(244, 240, 228, 0.7);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.diagnostics-disclosure .companion-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.6rem 0;
+}
