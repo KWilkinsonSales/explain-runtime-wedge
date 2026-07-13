@@ -11,15 +11,21 @@ async function responseBody(response: Response) {
   return (await response.json()) as Record<string, unknown>;
 }
 
-function mockGrantResponse(status = 200) {
+function mockGrantResponse(
+  status = 200,
+  body: Record<string, unknown> =
+    status === 200 ? { access_token: "temporary-grant", expires_in: 30 } : {},
+) {
   const fetchMock = vi.fn(async () => {
-    return new Response(
-      status === 200 ? JSON.stringify({ access_token: "temporary-grant", expires_in: 30 }) : "{}",
-      { status, headers: { "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+function grantRequestBody(fetchMock: ReturnType<typeof vi.fn>) {
+  const init = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
+  return JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
 }
 
 function logText(logMock: ReturnType<typeof vi.spyOn>) {
@@ -57,6 +63,15 @@ describe("deepgram-token function credential resolution", () => {
         headers: expect.objectContaining({ Authorization: "Token adl-test-secret" }),
       }),
     );
+  });
+
+  it("sends the official ttl_seconds grant field with a valid TTL", async () => {
+    process.env.ADLDeepgram = "adl-test-secret";
+    const fetchMock = mockGrantResponse();
+
+    await invoke();
+
+    expect(grantRequestBody(fetchMock)).toEqual({ ttl_seconds: 30 });
   });
 
   it("prefers ADLDeepgram when both supported variables are set", async () => {
@@ -104,7 +119,12 @@ describe("deepgram-token function credential resolution", () => {
     const secret = "credential-that-must-not-appear";
     process.env.ADLDeepgram = secret;
     const logMock = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    mockGrantResponse(403);
+    mockGrantResponse(403, {
+      err_code: "BAD_REQUEST",
+      err_msg: `credential ${secret} rejected`,
+      access_token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZGwtY29tcGFuaW9uIn0.fake-signature",
+    });
 
     const response = await invoke();
     const body = await responseBody(response);
@@ -113,5 +133,65 @@ describe("deepgram-token function credential resolution", () => {
     expect(response.status).toBe(502);
     expect(serializedBody).not.toContain(secret);
     expect(logText(logMock)).not.toContain(secret);
+    expect(serializedBody).not.toContain("fake-signature");
+    expect(logText(logMock)).not.toContain("fake-signature");
+  });
+
+  it("maps a successful Deepgram grant response", async () => {
+    process.env.ADLDeepgram = "adl-test-secret";
+    mockGrantResponse(200, { access_token: "temporary-grant", expires_in: 30 });
+
+    const response = await invoke();
+    const body = await responseBody(response);
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      key: "temporary-grant",
+      access_token: "temporary-grant",
+      token_type: "bearer",
+      expires_in: 30,
+    });
+  });
+
+  it("returns sanitized Deepgram 400 diagnostics", async () => {
+    process.env.ADLDeepgram = "adl-test-secret";
+    const logMock = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    mockGrantResponse(400, { err_code: "BAD_REQUEST", err_msg: "Invalid credentials." });
+
+    const response = await invoke();
+    const body = await responseBody(response);
+
+    expect(response.status).toBe(502);
+    expect(body).toEqual({
+      error: "Deepgram token grant failed (400).",
+      provider_code: "BAD_REQUEST",
+      provider_message: "Invalid credentials.",
+      endpoint: "https://api.deepgram.com/v1/auth/grant",
+    });
+    expect(logText(logMock)).toContain("BAD_REQUEST");
+    expect(logText(logMock)).toContain("Invalid credentials.");
+  });
+
+  it("keeps 401 and 403 credential/permission mappings", async () => {
+    process.env.ADLDeepgram = "adl-test-secret";
+    mockGrantResponse(401, { err_code: "UNAUTHORIZED", err_msg: "Invalid API key." });
+
+    let response = await invoke();
+    let body = await responseBody(response);
+    expect(response.status).toBe(502);
+    expect(body.error).toBe(
+      "Deepgram rejected the configured credential (401). Verify the Deepgram key is current and copied exactly.",
+    );
+    expect(body.provider_code).toBe("UNAUTHORIZED");
+
+    mockGrantResponse(403, { err_code: "FORBIDDEN", err_msg: "Member or higher role required." });
+
+    response = await invoke();
+    body = await responseBody(response);
+    expect(response.status).toBe(502);
+    expect(body.error).toBe(
+      "Deepgram rejected token grant (403). The configured credential must have Member or higher permissions.",
+    );
+    expect(body.provider_code).toBe("FORBIDDEN");
   });
 });

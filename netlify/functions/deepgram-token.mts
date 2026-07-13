@@ -28,6 +28,35 @@ function deepgramErrorMessage(status: number): string {
   return `Deepgram token grant failed (${status}).`;
 }
 
+function sanitizeProviderText(value: unknown, apiKey: string): string | undefined {
+  if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return undefined;
+  const text = String(value).replace(/\s+/g, " ").trim();
+  if (!text) return undefined;
+  const looksLikeJwt = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(text);
+  const looksLikeToken = text.length > 96 && /^[A-Za-z0-9._/+=:-]+$/.test(text);
+  if (text.includes(apiKey) || looksLikeJwt || looksLikeToken) return "[redacted]";
+  return text.slice(0, 240);
+}
+
+async function providerDiagnostics(response: Response, apiKey: string): Promise<Record<string, string>> {
+  const text = await response.text();
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return {};
+  }
+  if (typeof body !== "object" || body === null) return {};
+
+  const source = body as Record<string, unknown>;
+  const diagnostics: Record<string, string> = {};
+  const providerCode = sanitizeProviderText(source.err_code ?? source.code, apiKey);
+  const providerMessage = sanitizeProviderText(source.err_msg ?? source.message ?? source.error, apiKey);
+  if (providerCode) diagnostics.provider_code = providerCode;
+  if (providerMessage) diagnostics.provider_message = providerMessage;
+  return diagnostics;
+}
+
 export default async (req: Request): Promise<Response> => {
   if (req.method !== "POST") {
     log("method_rejected", { method: req.method });
@@ -59,12 +88,15 @@ export default async (req: Request): Promise<Response> => {
   });
 
   if (!tokenResponse.ok) {
+    const diagnostics = await providerDiagnostics(tokenResponse, apiKey);
     log("grant_failed", {
       endpoint: DEEPGRAM_TOKEN_GRANT_ENDPOINT,
       status: tokenResponse.status,
+      ...diagnostics,
     });
     return json(502, {
       error: deepgramErrorMessage(tokenResponse.status),
+      ...diagnostics,
       endpoint: DEEPGRAM_TOKEN_GRANT_ENDPOINT,
     });
   }
