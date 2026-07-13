@@ -1,7 +1,7 @@
 // Mints a short-lived Deepgram auth token so the browser can open a streaming
-// WebSocket without ever seeing the master key. Requires DEEPGRAM_API_KEY in
-// the Netlify environment. DEEPGRAM_PROJECT_ID is not required for the token
-// grant path.
+// WebSocket without ever seeing the master key. Requires ADLDeepgram in the
+// Netlify environment. DEEPGRAM_API_KEY remains a temporary compatibility
+// fallback. DEEPGRAM_PROJECT_ID is not required for the token grant path.
 
 const DEEPGRAM_API = "https://api.deepgram.com/v1";
 const DEEPGRAM_TOKEN_GRANT_ENDPOINT = `${DEEPGRAM_API}/auth/grant`;
@@ -20,10 +20,10 @@ function log(event: string, details: Record<string, unknown> = {}) {
 
 function deepgramErrorMessage(status: number): string {
   if (status === 401) {
-    return "Deepgram rejected DEEPGRAM_API_KEY (401). Verify the key value is current and copied exactly.";
+    return "Deepgram rejected the configured credential (401). Verify the Deepgram key is current and copied exactly.";
   }
   if (status === 403) {
-    return "Deepgram rejected token grant (403). DEEPGRAM_API_KEY must have Member or higher permissions.";
+    return "Deepgram rejected token grant (403). The configured credential must have Member or higher permissions.";
   }
   return `Deepgram token grant failed (${status}).`;
 }
@@ -34,10 +34,10 @@ export default async (req: Request): Promise<Response> => {
     return json(405, { error: "POST only." });
   }
 
-  const apiKey = process.env.DEEPGRAM_API_KEY;
+  const apiKey = process.env.ADLDeepgram?.trim() || process.env.DEEPGRAM_API_KEY?.trim();
   if (!apiKey) {
-    log("missing_env", { missing: "DEEPGRAM_API_KEY" });
-    return json(503, { error: "Live transcription is not configured (DEEPGRAM_API_KEY missing)." });
+    log("missing_env", { missing: "ADLDeepgram" });
+    return json(503, { error: "Live transcription is not configured. Set the ADLDeepgram production secret." });
   }
 
   if (!process.env.DEEPGRAM_PROJECT_ID) {
