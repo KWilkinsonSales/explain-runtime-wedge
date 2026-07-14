@@ -1,8 +1,9 @@
 # Durin Multimodal Theme Intake — Slice 0 — Architecture Note
 
-**Command 1 scope only: contracts, schemas, fixtures, acceptance matrix.**
-No storage, adapters, UI, retrieval, or model assistance exists yet — those are
-Commands 2–4 and are deliberately absent from this folder.
+**Commands 1–2 complete: contracts, schemas, fixtures, acceptance matrix,
+and the deterministic governed spine.** No adapters, UI, retrieval surface,
+or model assistance exists yet — those are Commands 3–4 and are deliberately
+absent from this folder.
 
 ## Governing authorities
 
@@ -39,11 +40,17 @@ src/durin/
   contracts.ts       versioned types, LOCKED state enums, transition tables,
                      lane-visibility policy (pure functions only)
   guards.ts          deterministic dependency-free runtime validators
+  sha256.ts          pure synchronous SHA-256 + canonical JSON (Node/browser)
+  ledger.ts          append-only, hash-chained event ledger over a KV backend
+  spine.ts           domain services: admission, derivation, review,
+                     correction, routing, deletion states, receipts, reopen,
+                     audit, lane-gated queries
   schemas/           JSON Schema (2020-12) mirrors, one per core object
                      + fixture-manifest schema
   fixtures/          five synthetic fixture manifests
   ACCEPTANCE.md      A1–A10 matrix, written before implementation
 tests/durinContracts.test.ts   contract/fixture/policy tests (vitest)
+tests/durinSpine.test.ts       spine coverage + six failure injections
 ```
 
 ## Core objects (contract version 0.1.0)
@@ -85,9 +92,56 @@ labeled as such** — the guard and schema reject any fixture whose
 `provenanceLabel` does not begin with `synthetic`. No real personal data,
 recordings, notes, documents, or photographs are referenced.
 
-## What Command 2 builds on this
+## The Command 2 spine
 
-Append-only local ledger + hashing spine enforcing `SOURCE_TRANSITIONS` /
-`REVIEW_TRANSITIONS` / `DELETION_TRANSITIONS`, idempotent admission keyed on
-`contentHash`, receipt generation/reopen, audit events for transitions and
-denied crossings, and the six failure injections listed in ACCEPTANCE.md.
+Event-sourced and append-only. Every state change is an entry in
+`DurinLedger` (`ledger.ts`): hash-chained (`entryHash` over the canonical
+serialization + `prevHash`), verified in full on every load, persisted
+through the same `KeyValueBackend` idiom as `teacherprep/store.ts`. The
+storage medium is mutable, so the ledger makes mutation *detectable and
+fail-closed* rather than pretending otherwise: naive tampering breaks the
+chain; an adversarial re-signed tamper of a receipt is still caught by the
+reopen digest. Loading an unknown store version refuses rather than
+migrating destructively.
+
+`DurinSpine` (`spine.ts`) is the only write path and enforces:
+
+- **Idempotent admission** keyed on `contentHash` — the original is
+  preserved to the content store before any state advances; a declared-hash
+  mismatch is denied and audited; a re-import yields a
+  `DuplicateObservation` (`linked_duplicate` or `idempotent_receipt`),
+  never a second canonical artifact (A7).
+- **Fail-closed holding** — a `null` privacy hint or an explicit hold
+  request lands the source in `held` with a system-authored
+  `unsorted_holding` disposition and unresolved questions; only a human can
+  walk it through `held → reviewed → admitted → routed`.
+- **Derivation integrity** — deriving re-reads and re-hashes the stored
+  original; a missing or mutated original is denied and audited (A2).
+- **Append-only review history** — proposals, reviews, corrections are
+  ledger entries; corrections supersede with bidirectional links plus
+  `CorrectionTelemetry`, and terminal states stay terminal (A8).
+- **Closed-by-default routing** — routing requires a human authority and an
+  `admitted` source; crossings are human-approved, directional, and checked
+  at query time; denied crossings append `CROSSING_DENIED` audit entries
+  (A3); `restricted_health_legal` is refused as an ordinary query scope
+  outright (A6).
+- **No-delete boundary** — deletion is its own explicit state machine and
+  `executeDeletion` is refused unconditionally in Slice 0, with the refusal
+  itself audited (A9).
+- **Deterministic receipts** — `issueReceipt` digests the canonical
+  serialization of everything it references; `reopenReceipt` replays the
+  ledger to the receipt's own seq and fails closed on any digest drift, so
+  a fresh session reconstructs identical records even after later
+  corrections (A10).
+
+Hashing is a pure synchronous SHA-256 (`sha256.ts`, FIPS 180-4,
+vector-tested) so the spine behaves identically in vitest and in the
+browser surface that arrives in Command 3 — WebCrypto's digest is
+async-only and Node's crypto module doesn't exist in the browser.
+
+## What Command 3 builds on this
+
+Manual source adapters (audio, note/text, PDF/scan, image, object photo)
+that preserve bytes before derivation and feed `DurinSpine.admit`, plus the
+minimum responsive review flow: import → preview → confirm lane → inspect
+derivation → propose themes → review → admit/hold → receipt.
