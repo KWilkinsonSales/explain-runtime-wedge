@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/derived-representation/0.1.0",
+  "title": "DerivedRepresentation",
+  "description": "Transcript, extracted text, thumbnail, description, or normalized metadata. Always linked to its source artifact and generator/version; can never masquerade as an original.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "derivedId",
+    "sourceArtifactId",
+    "kind",
+    "generator",
+    "contentHash",
+    "createdAt",
+    "storageRef",
+    "isOriginal"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "derivedId": { "type": "string", "minLength": 1 },
+    "sourceArtifactId": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["transcript", "extracted_text", "thumbnail", "description", "normalized_metadata"]
+    },
+    "generator": { "$ref": "#/$defs/generator" },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "storageRef": { "type": "string", "minLength": 1 },
+    "isOriginal": { "const": false }
+  },
+  "$defs": {
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "method"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "method": { "enum": ["human_manual", "deterministic_rule", "model_proposal"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "contractVersion": "0.1.0",
+  "fixtureId": "durin-s0-pdf-01",
+  "title": "PDF/scan — one-page Durin intake-router architecture memo",
+  "provenanceLabel": "synthetic placeholder — generated one-page memo rendered to PDF for Slice 0; not a real business document scan",
+  "sourceType": "pdf_scan",
+  "syntheticContent": "A synthetic one-page architecture memo describing the Durin intake-router: one governed admission spine, immutable originals, derived working copies, privacy lanes, and receipts. Includes an intentionally wrong author attribution so the correction/supersession path (A8) has real material to exercise.",
+  "expectedLane": "adl_business",
+  "expectedInitialRoute": "adl_business",
+  "expectedThemes": [
+    { "themeType": "project", "value": "Durin intake-router", "expectedReviewOutcome": "approved" },
+    { "themeType": "purpose_intended_use", "value": "architecture reference for governed intake", "expectedReviewOutcome": "approved" },
+    { "themeType": "person", "value": "memo author (intentionally misattributed, then corrected)", "expectedReviewOutcome": "superseded" },
+    { "themeType": "provenance", "value": "internal synthetic memo, generated for Slice 0", "expectedReviewOutcome": "approved" }
+  ],
+  "negativeVisibility": ["private_journal", "family_memory", "restricted_health_legal"],
+  "duplicateBehavior": "Re-importing the identical PDF bytes must match on contentHash and create a DuplicateObservation linked to the canonical SourceArtifact; a re-export with different bytes (new scan) is a NEW source, related by human review only, never silently merged.",
+  "retrievalProofQueries": [
+    "Find all sources associated with the Durin intake-router idea."
+  ],
+  "acceptanceLinkage": ["A1", "A2", "A5", "A8"]
+}

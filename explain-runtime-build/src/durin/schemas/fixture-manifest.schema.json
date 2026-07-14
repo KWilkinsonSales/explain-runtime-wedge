@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/fixture-manifest/0.1.0",
+  "title": "FixtureManifest",
+  "description": "Bounded Slice 0 fixture definition: expected lane, themes, negative visibility, duplicate behavior, and A1–A10 linkage. Slice 0 fixtures are synthetic placeholders and must be truthfully labeled as such.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "fixtureId",
+    "title",
+    "provenanceLabel",
+    "sourceType",
+    "syntheticContent",
+    "expectedLane",
+    "expectedInitialRoute",
+    "expectedThemes",
+    "negativeVisibility",
+    "duplicateBehavior",
+    "retrievalProofQueries",
+    "acceptanceLinkage"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "fixtureId": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "provenanceLabel": { "type": "string", "pattern": "^synthetic" },
+    "sourceType": {
+      "enum": ["audio_recording", "text_note_export", "pdf_scan", "family_photo", "object_photo"]
+    },
+    "syntheticContent": { "type": "string", "minLength": 1 },
+    "expectedLane": { "$ref": "#/$defs/lane" },
+    "expectedInitialRoute": { "$ref": "#/$defs/lane" },
+    "expectedThemes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["themeType", "value", "expectedReviewOutcome"],
+        "properties": {
+          "themeType": {
+            "enum": [
+              "person",
+              "relationship",
+              "event_life_chapter",
+              "place_time",
+              "object",
+              "activity",
+              "emotion_atmosphere",
+              "story_memory",
+              "purpose_intended_use",
+              "project",
+              "provenance",
+              "privacy"
+            ]
+          },
+          "value": { "type": "string", "minLength": 1 },
+          "expectedReviewOutcome": {
+            "enum": ["proposed", "approved", "corrected", "rejected", "uncertain", "superseded"]
+          }
+        }
+      }
+    },
+    "negativeVisibility": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/lane" }
+    },
+    "duplicateBehavior": { "type": "string", "minLength": 1 },
+    "retrievalProofQueries": { "type": "array", "items": { "type": "string" } },
+    "acceptanceLinkage": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "enum": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"] }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "enum": [
+        "adl_business",
+        "private_journal",
+        "family_memory",
+        "faith_study",
+        "object_archive",
+        "unsorted_holding",
+        "restricted_health_legal"
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "contractVersion": "0.1.0",
+  "fixtureId": "durin-s0-note-01",
+  "title": "Exported text note — mixed health reflection and errands",
+  "provenanceLabel": "synthetic placeholder — invented note text for Slice 0; no real health information, no real Apple Note exported",
+  "sourceType": "text_note_export",
+  "syntheticContent": "A synthetic exported note that mixes a personal medication-timing reflection with an ordinary errand list. The mix of restricted health content and mundane content is intentional: unknown or mixed material must route to unsorted_holding first, and only an explicit human decision may move it to restricted_health_legal.",
+  "expectedLane": "restricted_health_legal",
+  "expectedInitialRoute": "unsorted_holding",
+  "expectedThemes": [
+    { "themeType": "privacy", "value": "restricted health reflection", "expectedReviewOutcome": "approved" },
+    { "themeType": "activity", "value": "errand list", "expectedReviewOutcome": "rejected" },
+    { "themeType": "event_life_chapter", "value": "health-routine adjustment", "expectedReviewOutcome": "uncertain" }
+  ],
+  "negativeVisibility": [
+    "private_journal",
+    "family_memory",
+    "adl_business",
+    "faith_study",
+    "object_archive"
+  ],
+  "duplicateBehavior": "Re-importing the identical exported note text must match on contentHash and produce an idempotent receipt referencing the canonical SourceArtifact; no second canonical record, and the restricted routing decision is not re-litigated by the duplicate.",
+  "retrievalProofQueries": [
+    "Show records still unresolved or unsorted.",
+    "NEGATIVE: Show private founder reflections, but exclude health material — this fixture must NOT appear.",
+    "NEGATIVE: any general private_journal or family_memory search without explicit restricted scope must NOT return this fixture."
+  ],
+  "acceptanceLinkage": ["A1", "A4", "A6", "A9"]
+}

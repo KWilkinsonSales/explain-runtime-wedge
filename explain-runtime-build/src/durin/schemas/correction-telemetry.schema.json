@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/correction-telemetry/0.1.0",
+  "title": "CorrectionTelemetry",
+  "description": "Every correction produces telemetry and supersedes rather than erases the prior assertion. A repeated mistake is governance debt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "telemetryId",
+    "supersededAssertionId",
+    "supersedingAssertionId",
+    "reason",
+    "cause",
+    "correctedBy",
+    "correctedAt"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "telemetryId": { "type": "string", "minLength": 1 },
+    "supersededAssertionId": { "type": "string", "minLength": 1 },
+    "supersedingAssertionId": { "type": "string", "minLength": 1 },
+    "reason": { "type": "string", "minLength": 1 },
+    "cause": {
+      "enum": [
+        "wrong_person",
+        "wrong_relationship",
+        "wrong_theme_value",
+        "wrong_lane_scope",
+        "low_confidence_resolved",
+        "other"
+      ]
+    },
+    "correctedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "actorType"],
+      "properties": {
+        "actorId": { "type": "string", "minLength": 1 },
+        "actorType": { "enum": ["human", "system"] }
+      }
+    },
+    "correctedAt": { "type": "string", "format": "date-time" }
+  }
+}

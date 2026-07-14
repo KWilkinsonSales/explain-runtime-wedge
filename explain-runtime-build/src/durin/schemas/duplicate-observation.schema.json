@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/duplicate-observation/0.1.0",
+  "title": "DuplicateObservation",
+  "description": "Re-importing the same content never creates a second canonical source record; it creates an idempotent receipt or a linked duplicate observation pointing at the one canonical artifact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "observationId",
+    "contentHash",
+    "canonicalArtifactId",
+    "duplicateIntakeId",
+    "observedAt",
+    "action"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "observationId": { "type": "string", "minLength": 1 },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "canonicalArtifactId": { "type": "string", "minLength": 1 },
+    "duplicateIntakeId": { "type": "string", "minLength": 1 },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "action": { "enum": ["idempotent_receipt", "linked_duplicate"] }
+  }
+}

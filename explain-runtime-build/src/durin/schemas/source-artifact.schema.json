@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/source-artifact/0.1.0",
+  "title": "SourceArtifact",
+  "description": "Immutable reference to the original bytes or authoritative export. Never overwritten; deletion is a separate explicit state machine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "artifactId",
+    "intakeId",
+    "contentHash",
+    "byteLength",
+    "mediaType",
+    "originalFilename",
+    "storageRef",
+    "preservedAt",
+    "state",
+    "deletionState",
+    "isOriginal"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "artifactId": { "type": "string", "minLength": 1 },
+    "intakeId": { "type": "string", "minLength": 1 },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "byteLength": { "type": "integer", "minimum": 0 },
+    "mediaType": { "type": "string", "minLength": 1 },
+    "originalFilename": { "type": "string", "minLength": 1 },
+    "storageRef": { "type": "string", "minLength": 1 },
+    "preservedAt": { "type": "string", "format": "date-time" },
+    "state": {
+      "enum": ["received", "preserved", "derived", "reviewed", "admitted", "routed", "archived", "held", "rejected"]
+    },
+    "deletionState": {
+      "enum": ["not_requested", "requested", "approved", "executed", "denied"]
+    },
+    "isOriginal": { "const": true }
+  }
+}
