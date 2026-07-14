@@ -135,6 +135,24 @@ await page.getByRole("button", { name: "Back to sources" }).click();
 await assert(await page.getByText("state: routed", { exact: false }).first().isVisible(), "home lists the routed source");
 await page.screenshot({ path: OUT + "09-home-after-phone.png", fullPage: true });
 
+// 10. Meaning retrieval (Command 4): deterministic, explained, lane-gated
+await page.getByRole("button", { name: "Retrieve by meaning" }).click();
+await page.getByLabel("Retrieval query").fill("Find all sources associated with the Durin intake-router idea.");
+await page.getByRole("button", { name: "Search", exact: true }).click();
+await assert(await page.getByText("How your query was read").isVisible(), "query mapping shown to the operator");
+await assert(await page.getByText(/Why it matched/).first().isVisible(), "result carries a why-matched explanation");
+await assert(await page.getByText(/approved assertion .*contains "durin"/i).first().isVisible(), "explanation names the causal approved assertion");
+await assert(await page.getByText(/review: approved/).first().isVisible(), "result shows review state and confidence");
+await assert((await page.getByRole("button", { name: /Open receipt/ }).count()) > 0, "result links to its receipt");
+await noHorizontalScroll("search results");
+await page.screenshot({ path: OUT + "10-search-phone.png", fullPage: true });
+
+// 11. Ambiguous query fails closed with narrowing help
+await page.getByLabel("Retrieval query").fill("stuff");
+await page.getByRole("button", { name: "Search", exact: true }).click();
+await assert(await page.getByText("Failed closed:").isVisible(), "ambiguous query fails closed with suggestions");
+await page.screenshot({ path: OUT + "11-search-failclosed-phone.png", fullPage: true });
+
 await assert(externalRequests.length === 0, `zero non-localhost requests (saw ${externalRequests.length})`);
 
 await browser.close();

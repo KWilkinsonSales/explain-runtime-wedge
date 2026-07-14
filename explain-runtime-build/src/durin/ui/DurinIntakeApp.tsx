@@ -18,6 +18,8 @@ import {
 } from "../adapters";
 import { DurinSpine, DurinSpineError } from "../spine";
 import { createMemoryBackend, type KeyValueBackend } from "../ledger";
+import { retrieve, type RetrievalResponse } from "../retrieval";
+import { applyProposals, createKeywordProvider } from "../themeProposal";
 
 // Slice 0 is single-operator and device-local. Every review action below is
 // this explicit human actor — never a system actor.
@@ -50,7 +52,7 @@ function browserBackend(): KeyValueBackend {
   return createMemoryBackend();
 }
 
-type Step = "home" | "import" | "lane" | "derivation" | "themes" | "review" | "disposition" | "receipt";
+type Step = "home" | "import" | "lane" | "derivation" | "themes" | "review" | "disposition" | "receipt" | "search";
 
 type Draft = {
   sourceType: SourceType;
@@ -110,6 +112,7 @@ export default function DurinIntakeApp() {
       {step === "home" && (
         <HomeScreen
           spine={spine}
+          onSearch={() => setStep("search")}
           onNewImport={() => {
             setDraft(null);
             setImported(null);
@@ -206,13 +209,115 @@ export default function DurinIntakeApp() {
       {step === "receipt" && receipt !== null && (
         <ReceiptScreen spine={spine} receipt={receipt} guard={guard} onHome={() => setStep("home")} />
       )}
+
+      {step === "search" && (
+        <SearchScreen
+          spine={spine}
+          onOpenReceipt={(receiptId) => {
+            const found = spine.listReceipts().find((candidate) => candidate.receiptId === receiptId);
+            if (found) {
+              setReceipt(found);
+              setStep("receipt");
+            }
+          }}
+          onHome={() => setStep("home")}
+        />
+      )}
     </main>
+  );
+}
+
+function SearchScreen(props: { spine: DurinSpine; onOpenReceipt: (receiptId: string) => void; onHome: () => void }) {
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState<RetrievalResponse | null>(null);
+  return (
+    <section>
+      <h2>Retrieve by meaning</h2>
+      <p className="durin-muted">
+        Deterministic and bounded: your words map through a fixed rule table, only approved assertions in permitted
+        lanes can match, restricted health/legal material never appears here, and every result explains exactly why it
+        matched.
+      </p>
+      <label className="durin-field">
+        Query
+        <input
+          aria-label="Retrieval query"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder='e.g. "Show the family photo connected to teaching or learning"'
+        />
+      </label>
+      <button className="durin-primary" disabled={query.trim().length === 0} onClick={() => setResponse(retrieve(props.spine, query, OPERATOR))}>
+        Search
+      </button>
+      {response !== null && !response.ok && (
+        <div className="durin-card">
+          <strong>Failed closed:</strong> {response.reason}
+          <ul>
+            {response.suggestions.map((suggestion) => (
+              <li key={suggestion} className="durin-muted">
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {response !== null && response.ok && (
+        <>
+          <div className="durin-card">
+            <strong>How your query was read</strong>
+            <ul>
+              {response.mapping.map((line) => (
+                <li key={line} className="durin-muted">
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {response.results.length === 0 && <p className="durin-muted">No records match in the permitted lanes.</p>}
+          {response.results.map((result) => (
+            <div key={result.artifactId} className="durin-card">
+              <div className="durin-card-head">
+                <span className="durin-badge">{result.sourceType}</span>
+                <strong>{result.filename}</strong>
+              </div>
+              <p className="durin-muted">
+                lane: <b>{LANE_LABELS[result.lane]}</b> · state: <b>{result.sourceState}</b> · {result.artifactId}
+              </p>
+              <p className="durin-muted">
+                <b>Why it matched:</b>
+              </p>
+              <ul>
+                {result.whyMatched.map((line) => (
+                  <li key={line} className="durin-muted">
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              {result.matchedAssertions.map((assertion) => (
+                <p key={assertion.assertionId} className="durin-muted">
+                  ↳ {assertion.themeType}: “{assertion.value}” · review: <b>{assertion.reviewState}</b> · confidence:{" "}
+                  <b>{assertion.confidence.toFixed(2)}</b>
+                </p>
+              ))}
+              {result.receiptId !== null ? (
+                <button onClick={() => props.onOpenReceipt(result.receiptId!)}>Open receipt {result.receiptId}</button>
+              ) : (
+                <p className="durin-muted">No receipt issued yet.</p>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+      <button onClick={props.onHome}>Back to sources</button>
+    </section>
   );
 }
 
 function HomeScreen(props: {
   spine: DurinSpine;
   onNewImport: () => void;
+  onSearch: () => void;
   onOpenArtifact: (artifactId: string) => void;
   onOpenReceipt: (receipt: IntakeReceipt) => void;
 }) {
@@ -223,6 +328,7 @@ function HomeScreen(props: {
       <button className="durin-primary" onClick={props.onNewImport}>
         Import a source
       </button>
+      <button onClick={props.onSearch}>Retrieve by meaning</button>
       <h2>Sources</h2>
       {artifacts.length === 0 && <p className="durin-muted">No sources yet. Import one to begin the governed loop.</p>}
       <ul className="durin-list">
@@ -625,6 +731,35 @@ function ThemeScreen(props: {
             }
           >
             Propose object details
+          </button>
+        </div>
+      )}
+
+      {derivations.length > 0 && (
+        <div className="durin-card">
+          <h3>Suggest themes (proposal-only)</h3>
+          <p className="durin-muted">
+            Deterministic keyword provider — no model, no network. Suggestions enter the same review queue as manual
+            tags: they cannot choose a lane, admit, cross, or delete anything. Manual tagging above stays the fallback.
+          </p>
+          <button
+            onClick={() =>
+              props.guard(() => {
+                const textDerivation =
+                  derivations.find((derived) => derived.kind !== "normalized_metadata") ?? derivations[0];
+                const outcome = applyProposals(
+                  props.spine,
+                  props.artifact.artifactId,
+                  textDerivation.derivedId,
+                  props.spine.derivedContent(textDerivation.derivedId),
+                  createKeywordProvider(),
+                  OPERATOR
+                );
+                return outcome;
+              })
+            }
+          >
+            Run suggestion provider
           </button>
         </div>
       )}

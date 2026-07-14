@@ -249,6 +249,22 @@ export class DurinSpine {
     return [...this.project().receipts.values()];
   }
 
+  // Read a derived representation's stored content (Command 4: proposal
+  // providers run over derived text, never over anything they fetch
+  // themselves). Fails closed if the stored content drifted from its hash.
+  derivedContent(derivedId: string): string {
+    const derived = this.project().derivations.get(derivedId);
+    if (!derived) throw new DurinSpineError("UNKNOWN_RECORD", `unknown derivation ${derivedId}`);
+    const content = this.backend.getItem(derived.storageRef);
+    if (content === null) {
+      throw new DurinSpineError("MISSING_ORIGINAL", `derived content for ${derivedId} missing at ${derived.storageRef}`);
+    }
+    if (contentHashOf(content) !== derived.contentHash) {
+      throw new DurinSpineError("HASH_MISMATCH", `derived content for ${derivedId} no longer matches its hash`);
+    }
+    return content;
+  }
+
   auditEntries(): readonly DurinLedgerEntry[] {
     return this.ledger
       .all()
