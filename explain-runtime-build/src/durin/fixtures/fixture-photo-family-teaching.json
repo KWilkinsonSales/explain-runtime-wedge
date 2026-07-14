@@ -1,0 +1,24 @@
+{
+  "contractVersion": "0.1.0",
+  "fixtureId": "durin-s0-photo-family-01",
+  "title": "Family photo — parent teaching children to bake bread",
+  "provenanceLabel": "synthetic placeholder — staged/generated image description for Slice 0; not a real family photograph, no real faces",
+  "sourceType": "family_photo",
+  "syntheticContent": "A synthetic ordinary-family-photo stand-in: a parent at a kitchen counter showing two children how to knead bread dough, flour everywhere, late-afternoon light. Chosen so the meaning-retrieval query about teaching or learning has a true positive that filename, date, and GPS could never answer.",
+  "expectedLane": "family_memory",
+  "expectedInitialRoute": "family_memory",
+  "expectedThemes": [
+    { "themeType": "activity", "value": "teaching and learning — baking bread together", "expectedReviewOutcome": "approved" },
+    { "themeType": "relationship", "value": "parent and children", "expectedReviewOutcome": "approved" },
+    { "themeType": "person", "value": "adult figure (identity unconfirmed — a face is not verified identity)", "expectedReviewOutcome": "uncertain" },
+    { "themeType": "emotion_atmosphere", "value": "warm, ordinary day", "expectedReviewOutcome": "approved" },
+    { "themeType": "story_memory", "value": "ordinary day that could become a family tradition", "expectedReviewOutcome": "approved" }
+  ],
+  "negativeVisibility": ["adl_business", "restricted_health_legal"],
+  "duplicateBehavior": "Re-importing the identical image bytes must match on contentHash and create a DuplicateObservation against the canonical SourceArtifact; no second canonical photo record and no re-proposal of already-reviewed themes.",
+  "retrievalProofQueries": [
+    "Show the family photo connected to teaching or learning.",
+    "NEGATIVE: any adl_business retrieval must NOT return this fixture without an explicitly approved crossing."
+  ],
+  "acceptanceLinkage": ["A1", "A3", "A4", "A5"]
+}

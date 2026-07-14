@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/intake-envelope/0.1.0",
+  "title": "IntakeEnvelope",
+  "description": "One governed entry point record for any Slice 0 source. Capture first; classify and route after admission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "intakeId",
+    "sourceType",
+    "sourceUri",
+    "capturedAt",
+    "receivedAt",
+    "contentHash",
+    "owner",
+    "privacyHint",
+    "requestedAction",
+    "rawPreserved"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "intakeId": { "type": "string", "minLength": 1 },
+    "sourceType": {
+      "enum": ["audio_recording", "text_note_export", "pdf_scan", "family_photo", "object_photo"]
+    },
+    "sourceUri": { "type": "string", "minLength": 1 },
+    "capturedAt": { "type": ["string", "null"], "format": "date-time" },
+    "receivedAt": { "type": "string", "format": "date-time" },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "owner": { "$ref": "#/$defs/actor" },
+    "privacyHint": {
+      "enum": [
+        "adl_business",
+        "private_journal",
+        "family_memory",
+        "faith_study",
+        "object_archive",
+        "unsorted_holding",
+        "restricted_health_legal",
+        null
+      ]
+    },
+    "requestedAction": { "enum": ["admit", "hold"] },
+    "rawPreserved": { "type": "boolean" }
+  },
+  "$defs": {
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "actorType"],
+      "properties": {
+        "actorId": { "type": "string", "minLength": 1 },
+        "actorType": { "enum": ["human", "system"] }
+      }
+    }
+  }
+}

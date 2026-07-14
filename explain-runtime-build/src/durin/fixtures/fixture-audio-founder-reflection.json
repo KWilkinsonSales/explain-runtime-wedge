@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.1.0",
+  "fixtureId": "durin-s0-audio-01",
+  "title": "Voice memo — private founder reflection on the Durin intake-router idea",
+  "provenanceLabel": "synthetic placeholder — scripted and generated for Slice 0; no real personal data, no real recording imported",
+  "sourceType": "audio_recording",
+  "syntheticContent": "A short scripted voice memo in which a founder reflects privately on why the Durin intake-router matters: one governed entry point, capture first, route after admission, keep the receipt. The tone is personal reflection, not business documentation.",
+  "expectedLane": "private_journal",
+  "expectedInitialRoute": "private_journal",
+  "expectedThemes": [
+    { "themeType": "project", "value": "Durin intake-router", "expectedReviewOutcome": "approved" },
+    { "themeType": "story_memory", "value": "founder reflection on governed intake", "expectedReviewOutcome": "approved" },
+    { "themeType": "emotion_atmosphere", "value": "resolve, private conviction", "expectedReviewOutcome": "approved" },
+    { "themeType": "privacy", "value": "private founder reflection", "expectedReviewOutcome": "approved" }
+  ],
+  "negativeVisibility": ["adl_business", "family_memory", "faith_study"],
+  "duplicateBehavior": "Re-importing the identical audio bytes must match on contentHash, create a DuplicateObservation (or idempotent receipt) pointing at the canonical SourceArtifact, and must not create a second canonical source record.",
+  "retrievalProofQueries": [
+    "Show private founder reflections, but exclude health material.",
+    "Find all sources associated with the Durin intake-router idea."
+  ],
+  "acceptanceLinkage": ["A1", "A2", "A5", "A10"]
+}

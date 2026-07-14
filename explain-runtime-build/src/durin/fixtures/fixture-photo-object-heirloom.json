@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.1.0",
+  "fixtureId": "durin-s0-photo-object-01",
+  "title": "Object photo — grandmother's sewing machine (heirloom, intent unresolved)",
+  "provenanceLabel": "synthetic placeholder — staged/generated object-photo description for Slice 0; not a real heirloom photograph",
+  "sourceType": "object_photo",
+  "syntheticContent": "A synthetic object-archive stand-in: a mid-century sewing machine photographed on a garage workbench, described as inherited from a grandmother, condition worn but working. Keep/sell intent is deliberately left unresolved so the unresolved-records query and the no-delete/no-listing boundaries have material to exercise. No pricing, listing, or valuation is attached.",
+  "expectedLane": "object_archive",
+  "expectedInitialRoute": "object_archive",
+  "expectedThemes": [
+    { "themeType": "object", "value": "sewing machine (heirloom)", "expectedReviewOutcome": "approved" },
+    { "themeType": "provenance", "value": "family provenance — inherited from grandmother", "expectedReviewOutcome": "approved" },
+    { "themeType": "relationship", "value": "grandmother — grandchild inheritance line", "expectedReviewOutcome": "approved" },
+    { "themeType": "purpose_intended_use", "value": "keep/sell intent unresolved", "expectedReviewOutcome": "uncertain" }
+  ],
+  "negativeVisibility": ["adl_business", "restricted_health_legal"],
+  "duplicateBehavior": "PRIMARY A7 fixture: importing this exact image twice must yield exactly one canonical SourceArtifact, with the second import producing a DuplicateObservation (action linked_duplicate) or an idempotent receipt — proven by identical contentHash and stable canonicalArtifactId.",
+  "retrievalProofQueries": [
+    "Find the object with family provenance, not items approved for sale.",
+    "Show records still unresolved or unsorted."
+  ],
+  "acceptanceLinkage": ["A1", "A5", "A7", "A9"]
+}

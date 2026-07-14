@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "durin/slice0/route-disposition/0.1.0",
+  "title": "RouteDisposition",
+  "description": "Destination lane decision with human authority, reason, deletion state, and explicitly approved crossings. Closed by default: no crossings means no cross-lane visibility.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "dispositionId",
+    "intakeId",
+    "sourceArtifactId",
+    "lane",
+    "authority",
+    "reason",
+    "deletionState",
+    "approvedCrossings",
+    "unresolvedQuestions",
+    "decidedAt"
+  ],
+  "properties": {
+    "contractVersion": { "const": "0.1.0" },
+    "dispositionId": { "type": "string", "minLength": 1 },
+    "intakeId": { "type": "string", "minLength": 1 },
+    "sourceArtifactId": { "type": "string", "minLength": 1 },
+    "lane": { "$ref": "#/$defs/lane" },
+    "authority": { "$ref": "#/$defs/actor" },
+    "reason": { "type": "string", "minLength": 1 },
+    "deletionState": {
+      "enum": ["not_requested", "requested", "approved", "executed", "denied"]
+    },
+    "approvedCrossings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fromLane", "toLane", "approvedBy", "reason", "approvedAt"],
+        "properties": {
+          "fromLane": { "$ref": "#/$defs/lane" },
+          "toLane": { "$ref": "#/$defs/lane" },
+          "approvedBy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["actorId", "actorType"],
+            "properties": {
+              "actorId": { "type": "string", "minLength": 1 },
+              "actorType": { "const": "human" }
+            }
+          },
+          "reason": { "type": "string", "minLength": 1 },
+          "approvedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "unresolvedQuestions": { "type": "array", "items": { "type": "string" } },
+    "decidedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "lane": {
+      "enum": [
+        "adl_business",
+        "private_journal",
+        "family_memory",
+        "faith_study",
+        "object_archive",
+        "unsorted_holding",
+        "restricted_health_legal"
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "actorType"],
+      "properties": {
+        "actorId": { "type": "string", "minLength": 1 },
+        "actorType": { "enum": ["human", "system"] }
+      }
+    }
+  }
+}
