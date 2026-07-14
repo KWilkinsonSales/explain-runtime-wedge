@@ -226,6 +226,29 @@ export class DurinSpine {
     return this.project().dispositions.get(artifactId) ?? null;
   }
 
+  // Read-only listings for the review surface (Command 3). Pure projection
+  // reads — no state changes, no lane filtering (the UI shows an intake's
+  // own records to its operator; lane gating applies to retrieval queries).
+  listArtifacts(): readonly SourceArtifact[] {
+    return [...this.project().artifacts.values()];
+  }
+
+  derivationsFor(artifactId: string): readonly DerivedRepresentation[] {
+    return [...this.project().derivations.values()].filter((derived) => derived.sourceArtifactId === artifactId);
+  }
+
+  assertionsFor(artifactId: string): readonly ThemeAssertion[] {
+    return [...this.project().assertions.values()].filter((assertion) => assertion.sourceArtifactId === artifactId);
+  }
+
+  envelopeFor(intakeId: string): IntakeEnvelope | null {
+    return this.project().envelopes.get(intakeId) ?? null;
+  }
+
+  listReceipts(): readonly IntakeReceipt[] {
+    return [...this.project().receipts.values()];
+  }
+
   auditEntries(): readonly DurinLedgerEntry[] {
     return this.ledger
       .all()

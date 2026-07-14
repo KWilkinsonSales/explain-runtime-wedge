@@ -1,9 +1,9 @@
 # Durin Multimodal Theme Intake — Slice 0 — Architecture Note
 
-**Commands 1–2 complete: contracts, schemas, fixtures, acceptance matrix,
-and the deterministic governed spine.** No adapters, UI, retrieval surface,
-or model assistance exists yet — those are Commands 3–4 and are deliberately
-absent from this folder.
+**Commands 1–3 complete: contracts, schemas, fixtures, acceptance matrix,
+the deterministic governed spine, manual source adapters, and the review
+surface at `/durin`.** No retrieval surface or model assistance exists yet —
+those are Command 4 and are deliberately absent from this folder.
 
 ## Governing authorities
 
