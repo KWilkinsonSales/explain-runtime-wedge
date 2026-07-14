@@ -226,6 +226,45 @@ export class DurinSpine {
     return this.project().dispositions.get(artifactId) ?? null;
   }
 
+  // Read-only listings for the review surface (Command 3). Pure projection
+  // reads — no state changes, no lane filtering (the UI shows an intake's
+  // own records to its operator; lane gating applies to retrieval queries).
+  listArtifacts(): readonly SourceArtifact[] {
+    return [...this.project().artifacts.values()];
+  }
+
+  derivationsFor(artifactId: string): readonly DerivedRepresentation[] {
+    return [...this.project().derivations.values()].filter((derived) => derived.sourceArtifactId === artifactId);
+  }
+
+  assertionsFor(artifactId: string): readonly ThemeAssertion[] {
+    return [...this.project().assertions.values()].filter((assertion) => assertion.sourceArtifactId === artifactId);
+  }
+
+  envelopeFor(intakeId: string): IntakeEnvelope | null {
+    return this.project().envelopes.get(intakeId) ?? null;
+  }
+
+  listReceipts(): readonly IntakeReceipt[] {
+    return [...this.project().receipts.values()];
+  }
+
+  // Read a derived representation's stored content (Command 4: proposal
+  // providers run over derived text, never over anything they fetch
+  // themselves). Fails closed if the stored content drifted from its hash.
+  derivedContent(derivedId: string): string {
+    const derived = this.project().derivations.get(derivedId);
+    if (!derived) throw new DurinSpineError("UNKNOWN_RECORD", `unknown derivation ${derivedId}`);
+    const content = this.backend.getItem(derived.storageRef);
+    if (content === null) {
+      throw new DurinSpineError("MISSING_ORIGINAL", `derived content for ${derivedId} missing at ${derived.storageRef}`);
+    }
+    if (contentHashOf(content) !== derived.contentHash) {
+      throw new DurinSpineError("HASH_MISMATCH", `derived content for ${derivedId} no longer matches its hash`);
+    }
+    return content;
+  }
+
   auditEntries(): readonly DurinLedgerEntry[] {
     return this.ledger
       .all()

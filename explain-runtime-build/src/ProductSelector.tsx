@@ -16,6 +16,10 @@ export default function ProductSelector() {
           <span className="ps-name">Companion</span>
           <span className="ps-desc">Live listening prototype</span>
         </a>
+        <a className="ps-card" href="/durin">
+          <span className="ps-name">Durin Intake</span>
+          <span className="ps-desc">Governed multimodal intake · Slice 0</span>
+        </a>
       </nav>
     </main>
   );

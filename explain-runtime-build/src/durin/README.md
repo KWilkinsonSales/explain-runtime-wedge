@@ -1,9 +1,9 @@
 # Durin Multimodal Theme Intake — Slice 0 — Architecture Note
 
-**Commands 1–2 complete: contracts, schemas, fixtures, acceptance matrix,
-and the deterministic governed spine.** No adapters, UI, retrieval surface,
-or model assistance exists yet — those are Commands 3–4 and are deliberately
-absent from this folder.
+**Commands 1–4 complete: contracts, schemas, fixtures, acceptance matrix,
+the deterministic governed spine, manual source adapters, the review surface
+at `/durin`, deterministic meaning retrieval, and the bounded proposal-only
+theme provider.** Command 5 (formal acceptance) has not run.
 
 ## Governing authorities
 
@@ -45,12 +45,22 @@ src/durin/
   spine.ts           domain services: admission, derivation, review,
                      correction, routing, deletion states, receipts, reopen,
                      audit, lane-gated queries
+  adapters.ts        five bounded manual adapters over one shared import rail
+  retrieval.ts       deterministic bounded query mapping + lane-gated
+                     retrieval with causal match explanations
+  themeProposal.ts   replaceable proposal-only ThemeProposalProvider
+                     (deterministic keyword default + manual-only fallback)
+  featureFlag.ts     single flip for the /durin surface
+  ui/                review surface: import → preview → lane → derivation →
+                     themes → review → disposition → receipt → search
   schemas/           JSON Schema (2020-12) mirrors, one per core object
                      + fixture-manifest schema
   fixtures/          five synthetic fixture manifests
   ACCEPTANCE.md      A1–A10 matrix, written before implementation
 tests/durinContracts.test.ts   contract/fixture/policy tests (vitest)
 tests/durinSpine.test.ts       spine coverage + six failure injections
+tests/durinAdapters.test.ts    adapter rail + review-history tests
+tests/durinRetrieval.test.ts   five governing queries + adversarial set
 ```
 
 ## Core objects (contract version 0.1.0)
@@ -139,9 +149,39 @@ vector-tested) so the spine behaves identically in vitest and in the
 browser surface that arrives in Command 3 — WebCrypto's digest is
 async-only and Node's crypto module doesn't exist in the browser.
 
-## What Command 3 builds on this
+## The Command 3 adapters and review surface
 
 Manual source adapters (audio, note/text, PDF/scan, image, object photo)
-that preserve bytes before derivation and feed `DurinSpine.admit`, plus the
-minimum responsive review flow: import → preview → confirm lane → inspect
-derivation → propose themes → review → admit/hold → receipt.
+preserve the exact export before derivation, hash before admission, and feed
+`DurinSpine.admit` through one shared rail; the `/durin` surface runs the
+minimum responsive review flow with ORIGINAL/DERIVED badges, first-class
+manual tagging, fail-closed lane defaults, and no-delete language throughout.
+
+## The Command 4 retrieval and bounded assistance
+
+`retrieval.ts` maps operator language through a fixed, visible rule table —
+no embeddings, no model, no cloud vectors. Queries that match no rule fail
+closed with narrowing suggestions instead of guessing a scope. Matching runs
+only over the spine's lane gate (approved + retrievable + non-restricted,
+crossings honored, denials audited) plus safe source metadata, and every
+result lists the causal assertions and terms that made it match, with lane,
+review state, confidence, and receipt link. Status queries ("unresolved or
+unsorted") report held sources, unresolved questions, and uncertain
+assertions in ordinary lanes only.
+
+`themeProposal.ts` is the bounded assistance: a replaceable
+`ThemeProposalProvider` whose output can only ever enter the review queue as
+`proposed` — the apply gate rejects unsupported claims (evidence text must
+exist in the derived representation), forces privacy scope to the artifact's
+own disposition (fail-closed to holding), clamps confidence, and records
+provider/version/method plus the configuration hash on every proposal. The
+shipped default is a deterministic keyword table; `manual-only` is the
+no-model fallback. A future model-backed provider plugs into the same
+interface and the same gate: it cannot choose a lane, admit, cross, delete,
+send, or share.
+
+## What Command 5 does with this
+
+Formal Slice 0 acceptance: regression + A1–A10 against the five fixture
+manifests, failure injection, mobile smoke, fresh-session receipt reopen,
+adversarial lane retrieval, and the human acceptance receipt.

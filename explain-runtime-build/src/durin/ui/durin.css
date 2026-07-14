@@ -1,0 +1,205 @@
+/* Durin Intake — Slice 0. Mobile-first, single column; no external fonts,
+   no network assets. Mirrors the plain utilitarian look of the other
+   surfaces in this deployment. */
+
+.durin-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 12px 16px 48px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1c2733;
+  line-height: 1.45;
+}
+
+.durin-header h1 {
+  font-size: 1.35rem;
+  margin: 0.2em 0 0;
+}
+
+.durin-sub {
+  margin: 0 0 0.6em;
+  color: #52606d;
+  font-size: 0.9rem;
+}
+
+.durin-nodelete {
+  background: #f2f7f2;
+  border: 1px solid #b7d3b7;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #2f4f2f;
+}
+
+.durin-error {
+  background: #fdf0ef;
+  border: 1px solid #e3a29c;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #8c2f28;
+  font-size: 0.9rem;
+}
+
+.durin-notice {
+  background: #eff4fb;
+  border: 1px solid #a9c3e6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #2b4a75;
+  font-size: 0.9rem;
+}
+
+.durin-muted {
+  color: #52606d;
+  font-size: 0.85rem;
+  margin: 0.3em 0;
+}
+
+.durin-hash {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  color: #6b7683;
+  word-break: break-all;
+  margin: 0.2em 0;
+}
+
+.durin-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.durin-card {
+  border: 1px solid #d4dbe3;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  background: #fff;
+}
+
+.durin-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.durin-badge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  background: #e8edf3;
+  color: #3c4a59;
+}
+
+.durin-badge-original {
+  background: #24476b;
+  color: #fff;
+}
+
+.durin-badge-derived {
+  background: #8a6d1f;
+  color: #fff;
+}
+
+.durin-review-approved { border-left: 4px solid #3f7d4e; }
+.durin-review-rejected { border-left: 4px solid #a04039; opacity: 0.75; }
+.durin-review-uncertain { border-left: 4px solid #b08a2e; }
+.durin-review-superseded { border-left: 4px solid #7a7a7a; opacity: 0.7; }
+.durin-review-proposed { border-left: 4px solid #4a6b8a; }
+.durin-review-corrected { border-left: 4px solid #5b4a8a; }
+
+.durin-field {
+  display: block;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+.durin-field input,
+.durin-field select,
+.durin-field textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 8px;
+  border: 1px solid #c3ccd6;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.durin-lane {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 2px;
+  font-size: 0.92rem;
+}
+
+button {
+  font: inherit;
+}
+
+.durin-shell button {
+  margin: 6px 8px 6px 0;
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: 1px solid #c3ccd6;
+  background: #f4f6f8;
+  cursor: pointer;
+  min-height: 42px;
+}
+
+.durin-shell button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.durin-primary {
+  background: #24476b !important;
+  border-color: #24476b !important;
+  color: #fff;
+}
+
+.durin-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.82rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.durin-preview-img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.durin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.durin-receipt dt {
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-top: 8px;
+  color: #3c4a59;
+}
+
+.durin-receipt dd {
+  margin: 2px 0 0;
+  font-size: 0.88rem;
+  word-break: break-word;
+}
+
+@media (min-width: 700px) {
+  .durin-shell {
+    padding-top: 24px;
+  }
+}

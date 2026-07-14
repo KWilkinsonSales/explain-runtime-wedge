@@ -24,4 +24,14 @@ describe("front-door route gate", () => {
   it("falls back to Companion for /teacher when the flag is off", () => {
     expect(resolveSurface("/teacher", false)).toBe("companion");
   });
+
+  it("routes /durin and subpaths to Durin Intake only when its flag is on", () => {
+    expect(resolveSurface("/durin", true, true)).toBe("durin");
+    expect(resolveSurface("/durin/receipts", true, true)).toBe("durin");
+    // Similar-looking prefixes must not leak into Durin.
+    expect(resolveSurface("/durination", true, true)).toBe("companion");
+    // Flag off (and the pre-Durin call shape) keeps the old behavior exactly.
+    expect(resolveSurface("/durin", true, false)).toBe("companion");
+    expect(resolveSurface("/durin", true)).toBe("companion");
+  });
 });
