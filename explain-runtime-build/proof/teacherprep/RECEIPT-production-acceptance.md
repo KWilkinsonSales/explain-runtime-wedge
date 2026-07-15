@@ -97,7 +97,7 @@ Merged mobile remediation: PR #36, head `c5227ff4495d33467f079562388ec36b212426f
 - Canonical and immutable production hosts both returned the validated week `July 13–19`, title/scripture block `2 Kings 16–25`, and official URL `https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/29?lang=eng`.
 - The canonical response carried `cache-control: public,max-age=3600`, `cache-status: "Netlify Durable"; fwd=bypass`, `netlify-vary: query`, and source timestamp `2026-07-15T23:40:12.302Z`.
 
-### Phone viewport matrix
+### Phone and tablet viewport matrix
 
 The browser runner reserves a 15px scrollbar gutter; document widths below are therefore 15px narrower than the requested outer viewport. `scrollWidth` equaled document width in every case.
 
@@ -106,8 +106,11 @@ The browser runner reserves a 15px scrollbar gutter; document widths below are t
 | 375×812 | 360px | 360px, fully contained | 328px | none | pass |
 | 390×844 | 375px | 375px, fully contained | 343px | none | pass |
 | 430×932 | 415px | 415px, fully contained | 383px | none | pass |
+| 768×1024 | 753px | 753px, fully contained | 600px | none | pass |
 
 At 390×844, This Week navigation targets were 117×44px and remained within the viewport. The primary action was 48px high. Teach used the full 375px document width for both card and controls; Previous, Next, Neutral Screen, section jump, and End Lesson remained reachable. Neutral Screen exposed a centered 158.5×48px Resume control. No clipping, edge overlap, or off-screen primary control was observed.
+
+The supplemental 768×1024 capture used the same Git-backed production deploy's `main--companion-prototype-erw.netlify.app` host to avoid an older device-local preparation pinned on the canonical origin. It rendered the validated official week, a 640px screen, 600px lesson card, 44px navigation targets, and a 48px primary control without overflow.
 
 ### Production flow, privacy, print, and network
 
@@ -135,10 +138,12 @@ At 390×844, This Week navigation targets were 117×44px and remained within the
 - `production-acceptance-retry/390-neutral-screen.jpg`
 - `production-acceptance-retry/390-print-export-controls.jpg`
 - `production-acceptance-retry/430-this-week.jpg`
+- `production-acceptance-retry/768-this-week.jpg`
+- `production-acceptance-retry/OPERATOR-physical-iphone-evidence.md`
 
 ### Physical-iPhone gate and remaining limitation
 
-No physical iPhone was attached or remotely controllable in this execution, so device model, iOS version, physical Safari viewport, safe-area/orientation behavior, and device screenshots could not be recorded. Simulated 375×812, 390×844, and 430×932 browser evidence is not substituted for that mandatory physical-device gate. All automated production evidence passes, but the acceptance command requires the physical-iPhone result before the accepted verdict may be used.
+No physical iPhone was attached or remotely controllable in this execution, so device model, iOS version, physical Safari viewport, safe-area/orientation behavior, and device screenshots could not be recorded. Simulated 375×812, 390×844, 430×932, and 768×1024 browser evidence is not substituted for that mandatory physical-device gate. The compact operator checklist and result fields are preserved in `production-acceptance-retry/OPERATOR-physical-iphone-evidence.md`. All automated production evidence passes, but the acceptance command requires the completed physical-iPhone record before the accepted verdict may be used.
 
 ## Verdict
 
