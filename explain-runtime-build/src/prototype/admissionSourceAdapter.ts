@@ -11,6 +11,12 @@
 // otter_archive is archive/import-only: it normalizes transcript text already
 // obtained from Otter (or a meeting reference to it). It never opens a live
 // Otter connection.
+//
+// Event classification itself (detectEventType) lives in @adl/companion-shared
+// so Companion and ExplainIT classify recipient text identically — see that
+// package for the single source of truth.
+import { detectEventType } from "../../../packages/companion-shared/src/eventDetection";
+export { detectEventType };
 
 export type SourceProvider = "browser_mic" | "otter_archive" | "paste_text";
 
@@ -66,34 +72,6 @@ const SOURCE_EVIDENCE_QUALITY: Record<SourceProvider, string> = {
   otter_archive: "archived third-party transcript; imported, not live-streamed",
   paste_text: "verbatim operator-entered text; highest textual fidelity"
 };
-
-const QUESTION_LEAD_WORDS = new Set([
-  "who", "what", "when", "where", "why", "how",
-  "can", "could", "would", "should",
-  "is", "are", "do", "does", "did"
-]);
-
-interface EventDetection {
-  event_type: CompanionEventType;
-  confidence: number;
-  reason: string;
-}
-
-// Deterministic, text-only classification. No source_provider input on purpose.
-export function detectEventType(text: string): EventDetection {
-  const trimmed = text.trim();
-
-  if (trimmed.endsWith("?")) {
-    return { event_type: "question", confidence: 0.95, reason: "ends-with-question-mark" };
-  }
-
-  const firstWord = trimmed.toLowerCase().split(/\s+/)[0] ?? "";
-  if (QUESTION_LEAD_WORDS.has(firstWord)) {
-    return { event_type: "question", confidence: 0.7, reason: `leads-with-question-word:${firstWord}` };
-  }
-
-  return { event_type: "statement", confidence: 0.6, reason: "no-question-signal" };
-}
 
 export function normalizeAdmissionInput(input: AdmissionInput): NormalizedAdmissionEvent {
   const timestamp = input.timestamp ?? new Date().toISOString();

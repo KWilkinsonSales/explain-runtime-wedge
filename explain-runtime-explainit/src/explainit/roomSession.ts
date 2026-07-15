@@ -1,5 +1,5 @@
 // ExplainIT governed room session — pure and DOM-free so it can be unit
-// tested without a browser, in the same spirit as companionRuntime.ts.
+// tested without a browser, in the same spirit as Companion's runtime.
 //
 // The session mirrors the kernel lifecycle in packages/runtime: a room loads
 // its contract, admits sources, orients the recipient (the threshold gate),
@@ -7,7 +7,7 @@
 // immutable receipt. Closed is terminal. There is no path to an answer that
 // skips the gates — askQuestion itself enforces them.
 
-import { detectEventType } from "../prototype/admissionSourceAdapter";
+import { detectEventType } from "../../../packages/companion-shared/src/eventDetection";
 import type { GovernedResponse, RoomDefinition } from "./roomRegistry";
 
 export type RoomSessionStatus = "THRESHOLD" | "OPEN" | "CLOSED";

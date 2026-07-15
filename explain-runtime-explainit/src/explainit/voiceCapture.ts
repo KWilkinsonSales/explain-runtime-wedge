@@ -5,14 +5,14 @@
 // instead of silently falling back — text input remains the governed path.
 //
 // Injectable navigator/window shapes keep this testable without a browser,
-// same approach as companionRuntime.ts.
+// same approach as Companion's runtime.
 
 import {
   classifyMicrophoneError,
   describeMicrophoneError,
   isSpeechRecognitionSupported,
   VOICE_UNAVAILABLE_MESSAGES
-} from "../prototype/companionRuntime";
+} from "../../../packages/companion-shared/src/voiceCapability";
 
 interface MediaStreamTrackLike {
   stop: () => void;
