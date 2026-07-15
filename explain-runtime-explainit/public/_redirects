@@ -1,0 +1,3 @@
+# Standalone SPA: every path serves the app shell; src/main.tsx resolves the
+# route (entry vs. room) client-side via explainit/routes.ts.
+/*   /index.html   200
