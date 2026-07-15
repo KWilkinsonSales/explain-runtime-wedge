@@ -70,3 +70,9 @@ Updated follow-up:
 ## Verdict
 
 REJECTED — REMEDIATION REQUIRED
+
+## Mobile remediation prepared — operator gate
+
+A narrow Teacher-only mobile remediation has been prepared from post-PR-#34 `main`. Local geometry and viewport screenshots pass at 375×812, 390×844, 430×932, and 768×1024. The prior extreme narrow-rail PNG was traced primarily to full-page screenshot compositing under the browser viewport override; route-scoped margin, width, overflow, navigation, and Teach-control containment were nevertheless hardened.
+
+See `RECEIPT-mobile-layout-remediation.md` and `mobile-layout-remediation/` for the root cause, viewport matrix, checks, and visual proof. No deploy or production mutation was performed. The production verdict remains rejected until operator review, merge/deploy authorization, physical-iPhone verification, and the production retry are complete.
