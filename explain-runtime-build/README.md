@@ -1,14 +1,32 @@
 # Explain Runtime Wedge v0.1
 
+## Canonical prototype deployment rail
+
+Netlify project `companion-prototype-erw` is the canonical deployment rail
+for the current Companion and LDS Teacher Preparation prototype family.
+Its production origin is https://companion-prototype-erw.netlify.app.
+
+Prior Vercel / `adl-companion` designations are superseded for this
+prototype phase and remain historical architecture lineage only. Any future
+migration to Vercel requires separate authorization, feature-parity proof,
+deployment verification, and a new acceptance receipt.
+
+Verify the deployed revision by comparing the current Netlify production
+deploy's `commit_ref` and branch (`main`) with GitHub `main`; a manually
+published preview is not sufficient.
+
 ## Deployment front doors
 
-Three surfaces share this build (routing in `src/routeGate.ts`):
+Four routes share this build (routing in `src/routeGate.ts`):
 
-- `/teacher` — **LDS Teacher Preparation** (This Week · Prepare · Teach); see
-  `src/teacherprep/README.md`. Production review URL:
-  https://companion-prototype-erw.netlify.app/teacher
-- `/` — a product selector linking to both surfaces.
-- Every other path — Companion v1.1, unchanged (documented below).
+- `/` — product selector.
+- `/teacher` — **LDS Teacher Preparation**; see `src/teacherprep/README.md`.
+- `/companion/prototype` — **Companion** prototype (documented below).
+- `/durin` — **Durin Intake** accepted Slice 0 foundation.
+
+All production routes use the canonical Netlify origin above. Other paths
+currently fall through to Companion; they are not additional documented
+front doors.
 
 Deployable reference build for the frozen Explain ADL Founder Envoy Mission.
 
