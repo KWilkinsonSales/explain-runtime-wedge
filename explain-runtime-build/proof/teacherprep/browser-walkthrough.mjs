@@ -18,6 +18,32 @@ async function assert(cond, label) {
   }
 }
 
+async function assertTeacherLayout(target, label) {
+  const layout = await target.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const rect = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: box.right, width: box.width };
+    };
+    return {
+      viewportWidth,
+      documentWidth: document.documentElement.scrollWidth,
+      nav: rect(".tp-nav"),
+      screen: rect(".tp-screen"),
+      primaryVisible: [...document.querySelectorAll("button")].some((button) => {
+        const box = button.getBoundingClientRect();
+        return box.width >= 44 && box.height >= 44 && box.left >= 0 && box.right <= viewportWidth;
+      })
+    };
+  });
+  await assert(layout.documentWidth <= layout.viewportWidth, `${label}: no horizontal overflow`);
+  await assert(layout.nav && layout.nav.left >= 0 && layout.nav.right <= layout.viewportWidth, `${label}: navigation stays inside viewport`);
+  await assert(!layout.screen || layout.screen.width >= Math.min(340, layout.viewportWidth - 32), `${label}: lesson content uses phone width`);
+  await assert(layout.primaryVisible, `${label}: a primary control remains visible and touchable`);
+}
+
 // ---------- Phone flow (iPhone-ish 390x844) ----------
 const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const page = await phone.newPage();
@@ -43,7 +69,8 @@ await assert(
   await page.getByText("Independent study tool · Not affiliated").isVisible(),
   "disclaimer visible"
 );
-await page.screenshot({ path: OUT + "01-this-week-phone.png", fullPage: true });
+await assertTeacherLayout(page, "390x844 This Week");
+await page.screenshot({ path: OUT + "01-this-week-phone.png" });
 
 // 2. Start Preparation
 await page.getByRole("button", { name: "Start Preparation" }).click();
@@ -74,7 +101,8 @@ await assert(
   "private promotion asks for explicit confirmation"
 );
 await page.getByRole("button", { name: "Keep private" }).click();
-await page.screenshot({ path: OUT + "02-prepare-phone.png", fullPage: true });
+await assertTeacherLayout(page, "390x844 Prepare");
+await page.screenshot({ path: OUT + "02-prepare-phone.png" });
 
 // localStorage separation
 const stores = await page.evaluate(() => ({
@@ -106,7 +134,8 @@ await assert(
 // 6. Review → Ready for Class
 await reviewButton.click();
 await assert(await page.getByRole("heading", { name: "Review" }).isVisible(), "Review screen shows chosen content");
-await page.screenshot({ path: OUT + "03-review-phone.png", fullPage: true });
+await assertTeacherLayout(page, "390x844 Ready for Class");
+await page.screenshot({ path: OUT + "03-review-phone.png" });
 await page.getByRole("button", { name: "Ready for Class" }).click();
 
 // 7. Teach — opens on the title card; the promoted item is one Next away.
@@ -117,7 +146,8 @@ await assert(
 );
 const teachText = await page.locator(".tp-teach").innerText();
 await assert(!teachText.includes("Personal impression"), "private note never appears in Teach");
-await page.screenshot({ path: OUT + "04-teach-phone.png", fullPage: true });
+await assertTeacherLayout(page, "390x844 Teach");
+await page.screenshot({ path: OUT + "04-teach-phone.png" });
 
 // Neutral screen
 await page.getByRole("button", { name: "Neutral Screen" }).click();
@@ -181,11 +211,12 @@ await assert(companionVisible > 0, "Companion still renders at /companion/protot
 // ---------- Tablet width ----------
 // Same context as the phone flow so storage (prep + snapshot) carries over.
 const tabPage = await phone.newPage();
-await tabPage.setViewportSize({ width: 1024, height: 768 });
+await tabPage.setViewportSize({ width: 768, height: 1024 });
 await tabPage.goto(`${BASE}/`, { waitUntil: "networkidle" });
 await tabPage.screenshot({ path: OUT + "09-root-selector-tablet.png" });
 await tabPage.goto(`${BASE}/teacher`, { waitUntil: "networkidle" });
-await tabPage.screenshot({ path: OUT + "06-this-week-tablet.png", fullPage: true });
+await assertTeacherLayout(tabPage, "768x1024 This Week");
+await tabPage.screenshot({ path: OUT + "06-this-week-tablet.png" });
 await tabPage.getByRole("button", { name: "Continue Preparation" }).click();
 await tabPage.getByRole("button", { name: "Teach" }).click();
 await tabPage.screenshot({ path: OUT + "07-teach-tablet.png" });

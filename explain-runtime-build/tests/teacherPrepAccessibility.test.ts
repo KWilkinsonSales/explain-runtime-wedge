@@ -39,4 +39,12 @@ describe("accessibility contract in teacherprep.css", () => {
   it("has a tablet layout breakpoint", () => {
     expect(css).toMatch(/@media \(min-width: 900px\)/);
   });
+
+  it("pins the Teacher mobile width and overflow contract", () => {
+    expect(css).toMatch(/body\.tp-page\s*{[^}]*margin:\s*0/);
+    expect(css).toMatch(/\.tp-shell\s*{[^}]*width:\s*100%[^}]*overflow-x:\s*clip/);
+    expect(css).toMatch(/\.tp-screen\s*{[^}]*width:\s*100%[^}]*box-sizing:\s*border-box/);
+    expect(css).toMatch(/@media \(max-width: 480px\)/);
+    expect(css).toMatch(/\.tp-nav button\s*{[^}]*flex:\s*1 1 0/);
+  });
 });

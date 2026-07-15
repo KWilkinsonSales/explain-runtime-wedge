@@ -7,8 +7,10 @@ export default function TeacherPrepRoute() {
   useEffect(() => {
     const previousTitle = document.title;
     document.title = "Teacher Preparation";
+    document.body.classList.add("tp-page");
     return () => {
       document.title = previousTitle;
+      document.body.classList.remove("tp-page");
     };
   }, []);
 
