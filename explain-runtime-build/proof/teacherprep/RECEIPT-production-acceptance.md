@@ -50,6 +50,23 @@ The required official current-week success path could not be accepted against pr
 2. Deploy through the authorized Netlify rail without changing environment variables.
 3. Re-run this acceptance against the deployed revision, including a physical-iPhone visual check and the official current-week success path.
 
+## Retry — merged remediation
+
+Retested after PR #33 merged as `aa2cdb046fdbb9b9e25d0dd3b9123c42606ee5c2`.
+
+- Netlify deploy `6a571498a1e57f00082527aa` is ready in production, branch `main`, with `commit_ref` exactly matching the merge. It was published at `2026-07-15T05:03:48.163Z` and contains the updated `cfm-current` function.
+- A cache-separated canonical-host request and the immutable deploy-host request both returned `validated: true` for `July 13–19`, `2 Kings 16–25`, with the official Church manual URL. The official-current-week success path therefore passed on the deployed revision.
+- The earlier 404 response remained temporarily available at the unqualified canonical function URL through Netlify's one-hour durable cache. This is bounded cache rollover, not revision mismatch; normal clients may remain fail-closed until that entry expires.
+- A complete production flow passed on the immutable production deploy: This Week → Prepare; intent edit; scripture-block edit; explicit promotion; private note; Review; Ready; Teach; Neutral Screen; Resume; End Lesson.
+- Review and Teach DOM evidence excluded the sentinel private note. The full automated suite continues to cover print/export private-data exclusion and immutable snapshot behavior.
+- The required 390×844 phone rendering failed visual acceptance. `production-acceptance/02-official-week-phone.png` shows the navigation clipped at the left edge and the lesson compressed into an unusably narrow column. This reproduces the concern visible in the earlier phone capture.
+
+Updated follow-up:
+
+1. Correct the Teacher phone-width layout through a narrow Teacher-only remediation.
+2. Re-run the 390×844 browser capture and the operator's physical-iPhone check.
+3. Confirm the canonical-host function cache has rolled to the validated response.
+
 ## Verdict
 
 REJECTED — REMEDIATION REQUIRED
