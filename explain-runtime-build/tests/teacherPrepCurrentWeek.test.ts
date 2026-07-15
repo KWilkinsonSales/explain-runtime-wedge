@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectCfmCandidates, extractCurrentWeek, parseWeekLabel, rangeCovers } from "../src/teacherprep/cfmExtract";
+import { collectCfmCandidates, extractCurrentManualUri, extractCurrentWeek, extractCurrentWeekFromManualHtml, parseWeekLabel, rangeCovers } from "../src/teacherprep/cfmExtract";
 import {
   FALLBACK_LABEL,
   CURRENT_WEEK_CACHE_KEY,
@@ -77,6 +77,26 @@ describe("official payload extraction", () => {
   it("returns null when no entry covers today (falls back, never guesses)", () => {
     expect(extractCurrentWeek(officialPayload, new Date("2026-09-01T00:00:00Z"))).toBeNull();
     expect(extractCurrentWeek({ nothing: true }, NOW)).toBeNull();
+  });
+});
+
+describe("official public page extraction", () => {
+  const hub = `<a href="/study/manual/come-follow-me-for-home-and-church-old-testament-2026?lang=eng">2026</a>`;
+  const manual = `<li data-content-type="chapter" data-date-end="2026-07-19" data-date-start="2026-07-13"><a href="/study/manual/come-follow-me-for-home-and-church-old-testament-2026/29?lang=eng"><p class="primaryMeta">July 13–19</p><p class="title">2&nbsp;Kings 16–25</p></a></li>`;
+
+  it("finds the current-year manual and current dated lesson", () => {
+    expect(extractCurrentManualUri(hub, 2026)).toContain("old-testament-2026");
+    expect(extractCurrentWeekFromManualHtml(manual, NOW)).toEqual({
+      weekLabel: "July 13–19",
+      title: "2 Kings 16–25",
+      scriptureBlock: "2 Kings 16–25",
+      uri: "/study/manual/come-follow-me-for-home-and-church-old-testament-2026/29?lang=eng"
+    });
+  });
+
+  it("fails closed when the official metadata does not cover today", () => {
+    expect(extractCurrentManualUri(hub, 2027)).toBeNull();
+    expect(extractCurrentWeekFromManualHtml(manual, new Date("2026-07-20T00:00:00Z"))).toBeNull();
   });
 });
 

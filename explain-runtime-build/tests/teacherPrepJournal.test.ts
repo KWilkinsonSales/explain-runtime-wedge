@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ILLUSTRATIVE_LESSON } from "../src/teacherprep/fixture";
-import { addJournalEntry, journalEntries, removeJournalEntry, updateJournalEntry } from "../src/teacherprep/journal";
+import { addJournalEntry, journalEntries, removeJournalEntry, updateJournalEntry } from "../src/teacherprep/journalStore";
 import { PRIVATE_STORE_KEY, PrivateStore, SHARED_STORE_KEY, SharedStore, createMemoryBackend } from "../src/teacherprep/store";
 import { createPrepDoc, setBlockPromoted, setIntent } from "../src/teacherprep/prep";
 import { createSnapshot } from "../src/teacherprep/snapshot";
