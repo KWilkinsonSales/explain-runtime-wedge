@@ -52,6 +52,46 @@ export interface ExtractedWeek {
   uri: string;
 }
 
+function decodeHtml(value: string): string {
+  return value
+    .replace(/&nbsp;|&#160;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// The former JSON study endpoint now returns 404. These helpers parse only
+// explicit metadata published in the official public study pages.
+export function extractCurrentManualUri(html: string, year: number): string | null {
+  const hrefs = [...html.matchAll(/href=["']([^"']+)["']/gi)].map((match) => match[1].replace(/&amp;/g, "&"));
+  return hrefs.find((href) =>
+    href.startsWith("/study/manual/come-follow-me-for-home-and-church-") && href.includes(String(year))
+  ) ?? null;
+}
+
+export function extractCurrentWeekFromManualHtml(html: string, now: Date): ExtractedWeek | null {
+  const entries = html.match(/<li\b[^>]*data-date-start=["'][^"']+["'][^>]*>[\s\S]*?<\/li>/gi) ?? [];
+  for (const entry of entries) {
+    const start = entry.match(/data-date-start=["'](\d{4}-\d{2}-\d{2})["']/i)?.[1];
+    const end = entry.match(/data-date-end=["'](\d{4}-\d{2}-\d{2})["']/i)?.[1];
+    const uri = entry.match(/href=["']([^"']+)["']/i)?.[1]?.replace(/&amp;/g, "&");
+    if (!start || !end || !uri) continue;
+    const range = {
+      start: new Date(`${start}T00:00:00.000Z`),
+      end: new Date(`${end}T23:59:59.000Z`)
+    };
+    if (!rangeCovers(range, now)) continue;
+    const weekLabel = decodeHtml(entry.match(/<p\b[^>]*class=["'][^"']*primaryMeta[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? "");
+    const scriptureBlock = decodeHtml(entry.match(/<p\b[^>]*class=["'][^"']*title[^"']*["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? "");
+    if (!weekLabel || !scriptureBlock || !parseWeekLabel(weekLabel, now.getUTCFullYear())) return null;
+    return { weekLabel, title: scriptureBlock, scriptureBlock, uri };
+  }
+  return null;
+}
+
 interface CandidateEntry {
   weekLabel?: string;
   title?: string;

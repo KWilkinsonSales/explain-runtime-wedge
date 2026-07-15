@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { JournalEntry, PrivateMaterial } from "./types";
 import { PRIVATE_MICROCOPY } from "./fixture";
-import { addJournalEntry, journalEntries, removeJournalEntry } from "./journal";
+import { addJournalEntry, journalEntries, removeJournalEntry } from "./journalStore";
 
 // Device-local journal / reflections. Auto-saves as the teacher types
 // (debounced into the private store), deletes locally, and never leaves the
