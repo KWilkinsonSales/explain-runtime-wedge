@@ -67,12 +67,79 @@ Updated follow-up:
 2. Re-run the 390×844 browser capture and the operator's physical-iPhone check.
 3. Confirm the canonical-host function cache has rolled to the validated response.
 
-## Verdict
-
-REJECTED — REMEDIATION REQUIRED
-
 ## Mobile remediation prepared — operator gate
 
 A narrow Teacher-only mobile remediation has been prepared from post-PR-#34 `main`. Local geometry and viewport screenshots pass at 375×812, 390×844, 430×932, and 768×1024. The prior extreme narrow-rail PNG was traced primarily to full-page screenshot compositing under the browser viewport override; route-scoped margin, width, overflow, navigation, and Teach-control containment were nevertheless hardened.
 
 See `RECEIPT-mobile-layout-remediation.md` and `mobile-layout-remediation/` for the root cause, viewport matrix, checks, and visual proof. No deploy or production mutation was performed. The production verdict remains rejected until operator review, merge/deploy authorization, physical-iPhone verification, and the production retry are complete.
+
+## Production retry after mobile remediation
+
+Execution window: 2026-07-15T23:29Z–23:46Z (16:29–16:46 America/Phoenix)  
+GitHub `main`: `13fa74a2834c476b6de76fbffb613a52e1b73a8a`  
+Merged mobile remediation: PR #36, head `c5227ff4495d33467f079562388ec36b212426fe`, merge `32c7b3e9fb40ad8db3307af13d3bf8ab75ef6bc7`
+
+### Deployment truth
+
+- Netlify site: `companion-prototype-erw` (`0fca5864-c706-435c-a178-30657b31f5f9`).
+- Production deploy: `6a57e31fbd1380000833ea86`; state `ready`; context `production`; branch `main`; published `2026-07-15T19:44:54.785Z`.
+- Netlify `commit_ref` is exactly `13fa74a2834c476b6de76fbffb613a52e1b73a8a`, matching current GitHub `main`.
+- The deploy is Git-backed: its commit URL points to the GitHub revision and its production branch is `main`. No manual publish, deployment, environment-variable change, or rail change was performed.
+
+### Route and source truth
+
+- `/teacher`, `/companion/prototype`, `/durin`, and `/` each returned HTTP 200.
+- `/teacher` rendered Teacher Preparation and no Companion controls.
+- `/companion/prototype` rendered Companion controls and no Teacher controls.
+- `/durin` rendered Durin Intake and no Teacher controls.
+- The root selector retained `LDS Teacher Preparation` / `Prototype — curriculum workflow` and the canonical routes.
+- The exact unqualified canonical current-week endpoint returned HTTP 200 and `validated: true`; the earlier cached 404/fail-closed response has rolled over.
+- Canonical and immutable production hosts both returned the validated week `July 13–19`, title/scripture block `2 Kings 16–25`, and official URL `https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/29?lang=eng`.
+- The canonical response carried `cache-control: public,max-age=3600`, `cache-status: "Netlify Durable"; fwd=bypass`, `netlify-vary: query`, and source timestamp `2026-07-15T23:40:12.302Z`.
+
+### Phone viewport matrix
+
+The browser runner reserves a 15px scrollbar gutter; document widths below are therefore 15px narrower than the requested outer viewport. `scrollWidth` equaled document width in every case.
+
+| Requested viewport | Document width | Navigation | Lesson card | Horizontal overflow | Result |
+|---|---:|---:|---:|---|---|
+| 375×812 | 360px | 360px, fully contained | 328px | none | pass |
+| 390×844 | 375px | 375px, fully contained | 343px | none | pass |
+| 430×932 | 415px | 415px, fully contained | 383px | none | pass |
+
+At 390×844, This Week navigation targets were 117×44px and remained within the viewport. The primary action was 48px high. Teach used the full 375px document width for both card and controls; Previous, Next, Neutral Screen, section jump, and End Lesson remained reachable. Neutral Screen exposed a centered 158.5×48px Resume control. No clipping, edge overlap, or off-screen primary control was observed.
+
+### Production flow, privacy, print, and network
+
+- The canonical host passed This Week → Prepare; intent edit; lesson-block edit; official-source promotion; private journal sentinel; Review; and Ready for Class.
+- The same Git-backed immutable production deploy completed Ready → Teach; Next; Neutral Screen; Resume; print/export control inspection; and End Lesson after the Chrome automation connection ended.
+- The private sentinels were present in Prepare only and absent from Review, Teach, After class, and the default export surface.
+- The active class snapshot remained isolated from subsequent private journal material.
+- Print now, Teacher Packet, Class Handout, and Large Print / Presentation Backup were visible and enabled. Tests verified all three presets exclude private notes and journal material by default; only the Teacher Packet can receive private material after explicit opt-in. Print CSS was unchanged.
+- Observed page assets were same-origin script, stylesheet, and favicon resources. The current-week request was same-origin and the function's validated source was the official Church host. No browser console errors or unexpected destination was observed; microphone access was never requested.
+
+### Regression
+
+- `npm ci`: passed; 90 packages installed.
+- Focused Teacher, accessibility, privacy, snapshot, journal, current-week, source-promotion, no-evaluation, and route-gate suite: 9 files, 87 tests passed.
+- Full application suite: 19 files, 238 tests passed.
+- `npm run typecheck`: passed.
+- `npm run build`: passed with Vite 8.1.4; 60 modules transformed.
+
+### Screenshot index
+
+- `production-acceptance-retry/375-this-week.jpg`
+- `production-acceptance-retry/390-this-week.jpg`
+- `production-acceptance-retry/390-ready-for-class.jpg`
+- `production-acceptance-retry/390-teach.jpg`
+- `production-acceptance-retry/390-neutral-screen.jpg`
+- `production-acceptance-retry/390-print-export-controls.jpg`
+- `production-acceptance-retry/430-this-week.jpg`
+
+### Physical-iPhone gate and remaining limitation
+
+No physical iPhone was attached or remotely controllable in this execution, so device model, iOS version, physical Safari viewport, safe-area/orientation behavior, and device screenshots could not be recorded. Simulated 375×812, 390×844, and 430×932 browser evidence is not substituted for that mandatory physical-device gate. All automated production evidence passes, but the acceptance command requires the physical-iPhone result before the accepted verdict may be used.
+
+## Verdict
+
+REJECTED — REMEDIATION REQUIRED
