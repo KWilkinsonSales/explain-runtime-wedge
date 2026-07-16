@@ -55,6 +55,11 @@ export interface AdmissionReceipt {
     text_chunk: string;
   };
   output: CompanionOutput;
+  answer?: string;
+  understood_intent?: string;
+  provider?: string;
+  model?: string;
+  provider_request_id?: string | null;
 }
 
 export interface AdmissionInput {

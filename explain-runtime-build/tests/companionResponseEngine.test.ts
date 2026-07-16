@@ -126,3 +126,20 @@ describe("transcript evidence stays separate from guidance", () => {
     expect(response!.receipt!.output.speak).toBe(response!.speak);
   });
 });
+
+describe("bounded session context", () => {
+  it("passes prior user/answer turns to the provider for follow-ups", async () => {
+    const contexts: string[][] = [];
+    const provider: ResponseProvider = (input) => {
+      contexts.push(input.context.map((turn) => `${turn.role}:${turn.text}`));
+      const receipt = runAdmissionRail(input);
+      return { ...receipt, answer: input.text_chunk === "What did I just ask you?" ? "You asked me to explain ADL." : "ADL explained." };
+    };
+    const engine = new ResponseEngine(provider);
+    await engine.admitAndExecute("Explain ADL.", "paste_text");
+    const followUp = await engine.admitAndExecute("What did I just ask you?", "paste_text");
+    expect(contexts[0]).toEqual([]);
+    expect(contexts[1]).toEqual(["user:Explain ADL.", "assistant:ADL explained."]);
+    expect(followUp?.answer).toBe("You asked me to explain ADL.");
+  });
+});

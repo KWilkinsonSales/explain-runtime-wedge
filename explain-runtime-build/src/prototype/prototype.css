@@ -492,6 +492,27 @@ button.secondary {
   line-height: 1.4;
 }
 
+.speak-cue-card {
+  border-color: rgba(111, 220, 154, 0.36);
+}
+
+.speak-cue-card p {
+  font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+  line-height: 1.45;
+}
+
+.provider-error {
+  display: block;
+  margin-top: 0.65rem;
+  color: #f0b8b0;
+}
+
+.text-answer {
+  font-size: 1rem !important;
+  line-height: 1.5;
+  opacity: 1 !important;
+}
+
 .steer-details {
   max-width: 640px;
   margin: 0 auto;

@@ -7,11 +7,11 @@ import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:5173";
-const OUT = new URL("./shots/", import.meta.url).pathname;
+const OUT = new URL("./", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({
-  executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  executablePath: process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"]
 });
 const failures = [];
@@ -23,15 +23,39 @@ async function assert(cond, label) {
   }
 }
 
-const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
 await phone.grantPermissions(["microphone"]);
 const page = await phone.newPage();
+await page.route("**/*", async (route) => {
+  if (!route.request().url().includes("/.netlify/functions/companion-response")) return route.continue();
+  const request = route.request();
+  const payload = request.postDataJSON();
+  const utterance = String(payload.utterance ?? "");
+  const answer = utterance.includes("budget")
+    ? "The session does not establish whether the budget is approved; confirm with the accountable owner."
+    : "I understand the new statement and will keep it in the active session context.";
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      answer,
+      understood_intent: utterance.includes("?") ? "Determine the budget approval status" : "Hold the statement in context",
+      speak: utterance.includes("budget") ? "Can the accountable owner confirm whether the budget is approved?" : "Let's hold that point while we confirm the next step.",
+      steer: "Answer from established session evidence and ask for clarification when it is missing.",
+      provider: "openai",
+      model: "deterministic-browser-stub",
+      provider_request_id: "proof-safe",
+    }),
+  });
+});
 
 // 1. One-button activation
 await page.goto(`${BASE}/companion/prototype`, { waitUntil: "networkidle" });
+await assert((await page.locator("body").innerText()).trim().length > 0, "page renders meaningful content");
+await assert((await page.locator(".vite-error-overlay").count()) === 0, "no Vite error overlay");
 await assert(await page.getByRole("button", { name: "Start Companion ON" }).isVisible(), "Companion ON screen intact");
-await assert((await page.locator(".companion-banner").innerText()).includes("v1.2"), "banner shows v1.2");
-await page.screenshot({ path: OUT + "01-companion-off-phone.png", fullPage: true });
+await assert((await page.locator(".companion-banner").innerText()).includes("v1.2"), "Companion banner present");
+await page.screenshot({ path: OUT + "05-product-recovery-off-phone.png", fullPage: true });
 await page.getByRole("button", { name: "Start Companion ON" }).click();
 await page.locator(".speak-card").waitFor({ timeout: 15000 });
 await assert(
@@ -40,13 +64,14 @@ await assert(
 );
 
 // 2. SPEAK prominent, STEER collapsed, diagnostics behind a disclosure
-await assert(await page.locator(".speak-card").isVisible(), "SPEAK card is the primary surface");
+await assert(await page.locator(".speak-card").isVisible(), "useful answer card is the primary surface");
+await assert(await page.locator(".speak-cue-card").isVisible(), "SPEAK cue remains visible");
 await assert(!(await page.locator(".steer-details p").isVisible()), "STEER starts collapsed");
 await assert(!(await page.locator(".diagnostics-footer").isVisible()), "diagnostics hidden from the primary screen");
 for (const name of ["Copy", "Repeat", "Hold", "End"]) {
   await assert(await page.getByRole("button", { name }).isVisible(), `${name} control available`);
 }
-await page.screenshot({ path: OUT + "02-companion-listening-phone.png", fullPage: true });
+await page.screenshot({ path: OUT + "06-product-recovery-listening-phone.png", fullPage: true });
 
 // 3. Hold / resume
 await page.getByRole("button", { name: "Hold" }).click();
@@ -69,6 +94,7 @@ await assert(
   "one admitted event renders exactly one answer"
 );
 const answer = await page.locator(".admission-receipt-output").first().innerText();
+await assert(answer.includes("does not establish whether the budget is approved"), "useful answer rendered instead of acknowledgement");
 await assert(/speak/i.test(answer) && /steer/i.test(answer), "SPEAK and STEER rendered");
 
 // Duplicate admission is suppressed before execution.
@@ -83,7 +109,7 @@ await page.getByPlaceholder(/Type a message/).fill("We should hold the line.");
 await page.getByRole("button", { name: "Send", exact: true }).click();
 await page.waitForTimeout(300);
 await assert((await page.locator(".admission-receipt").count()) === 2, "new utterance produces exactly one more answer");
-await page.screenshot({ path: OUT + "03-companion-text-mode-phone.png", fullPage: true });
+await page.screenshot({ path: OUT + "07-product-recovery-text-answer-phone.png", fullPage: true });
 
 // 6. Explicit clean End
 await page.getByRole("button", { name: "End", exact: true }).click();
@@ -105,12 +131,20 @@ await assert(
 
 // 8. Tablet width
 const tabPage = await phone.newPage();
+await tabPage.route("**/*", async (route) => {
+  if (!route.request().url().includes("/.netlify/functions/companion-response")) return route.continue();
+  return route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ answer: "Ready for a bounded request.", understood_intent: "Wait for a request", speak: "What would you like to work through?", steer: "Keep the next step explicit.", provider: "openai", model: "deterministic-browser-stub" }),
+  });
+});
 await tabPage.setViewportSize({ width: 1024, height: 768 });
 await tabPage.goto(`${BASE}/companion/prototype`, { waitUntil: "networkidle" });
 await tabPage.getByRole("button", { name: "Start Companion ON" }).click();
 await tabPage.locator(".speak-card").waitFor({ timeout: 15000 });
 await assert(await tabPage.locator(".speak-card").isVisible(), "tablet Companion shows SPEAK surface");
-await tabPage.screenshot({ path: OUT + "04-companion-listening-tablet.png", fullPage: true });
+await tabPage.screenshot({ path: OUT + "08-product-recovery-listening-desktop.png", fullPage: true });
 
 await browser.close();
 console.log(failures.length === 0 ? "\nALL COMPANION CHECKS PASSED" : `\n${failures.length} CHECKS FAILED`);

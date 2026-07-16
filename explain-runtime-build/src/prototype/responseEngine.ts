@@ -44,6 +44,10 @@ export interface EngineResponse {
   fallback: boolean;
   superseded: boolean;
   receipt: AdmissionReceipt | null;
+  answer: string;
+  understoodIntent: string;
+  provider: string;
+  model: string;
 }
 
 export interface AdmitResult {
@@ -54,7 +58,17 @@ export interface AdmitResult {
 export const FALLBACK_SPEAK = "I could not process that just now. Keep going — I'm still listening.";
 export const FALLBACK_STEER = "The response provider failed for this utterance; the transcript is preserved.";
 
-export type ResponseProvider = (input: AdmissionInput) => Promise<AdmissionReceipt> | AdmissionReceipt;
+export interface ContextTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+export interface ResponseProviderInput extends AdmissionInput {
+  event_id: string;
+  context: ContextTurn[];
+}
+
+export type ResponseProvider = (input: ResponseProviderInput) => Promise<AdmissionReceipt> | AdmissionReceipt;
 
 export const deterministicProvider: ResponseProvider = (input) => runAdmissionRail(input);
 
@@ -81,6 +95,7 @@ export class ResponseEngine {
   private lastAdmittedNormalized: string | null = null;
   private executions = new Map<string, Promise<EngineResponse>>();
   private latestRendered: EngineResponse | null = null;
+  private context: ContextTurn[] = [];
 
   constructor(provider: ResponseProvider = deterministicProvider, callbacks: EngineCallbacks = {}) {
     sessionCounter += 1;
@@ -148,7 +163,9 @@ export class ResponseEngine {
       receipt = await this.provider({
         source_provider: event.sourceProvider,
         session_id: event.sessionId,
-        text_chunk: event.text
+        text_chunk: event.text,
+        event_id: event.eventId,
+        context: this.context.slice(-8)
       });
       output = receipt.output;
     } catch {
@@ -166,11 +183,17 @@ export class ResponseEngine {
       steer: output.steer,
       fallback,
       superseded,
-      receipt
+      receipt,
+      answer: receipt?.answer ?? output.speak,
+      understoodIntent: receipt?.understood_intent ?? (receipt?.event.event_type === "question" ? "Answer the question" : "Acknowledge the statement"),
+      provider: receipt?.provider ?? "deterministic",
+      model: receipt?.model ?? "deterministic-rail"
     };
 
     if (!superseded) {
       this.latestRendered = response;
+      this.context.push({ role: "user", text: event.text }, { role: "assistant", text: response.answer });
+      this.context = this.context.slice(-8);
       this.callbacks.onState?.(fallback ? "error" : "ready");
       this.callbacks.onResponse?.(response);
     }
