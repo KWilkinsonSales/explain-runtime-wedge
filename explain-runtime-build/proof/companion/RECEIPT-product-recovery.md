@@ -77,9 +77,19 @@ No normal unit test calls the live OpenAI API. Additional deterministic coverage
 
 ## Bounded live verification
 
-The existing process-level key was used only in memory for non-sensitive local prompts. The endpoint reached OpenAI, but all live attempts failed closed with sanitized `HTTP 401 / provider_rejected` (“response provider is not authorized”). No key, request header, raw provider response, or sensitive prompt was printed or stored.
+A newly authorized development-project credential was saved only to the ignored local `.env.local` and used for bounded local verification. The credential value, authorization headers, raw payloads, and prompt/answer text were not printed or stored in this receipt.
 
-Because the authorized existing key cannot currently complete a response, useful live direct-answer, contextual-follow-up, and clarification outcomes could not be accepted. Offline seams and UI behavior are proven, but live provider acceptance remains open.
+All accepted calls returned `200` from `openai / gpt-5.4-mini-2026-03-17`:
+
+| Scenario | Result | Sanitized quality evidence | Latency | Provider request ID |
+| --- | --- | --- | ---: | --- |
+| A | Pass | useful direct explanation; not acknowledgement-only; bounded SPEAK/STEER | 3418 ms | `resp_077804484ad11542006a584b6b39bc8199b3987464595ef745` |
+| B | Pass | explanation used theater-informed audience context | 2526 ms | `resp_05dcba0f51338fa9006a584b6e8bec819bb83d29e83d730545` |
+| C | Pass | contextual follow-up used actor/stage-manager framing from the active session | 2578 ms | `resp_010012a786dbeab6006a584b710d948199bc24b266f604c55a` |
+| D | Pass | active-session recall correctly referenced the immediately prior request | 2286 ms | `resp_00ee14c6328cc294006a584b73b2ac8198807965b00c4961fa` |
+| E | Pass | context-free ambiguous statement produced one concise clarification question | 1429 ms | `resp_0631e6015d7c0186006a584b84dbe48198a70b68186be23624` |
+
+All answers were useful and within the endpoint's response bounds; all SPEAK/STEER fields were present and bounded. The first ambiguity probe contained residual active-session context and produced a useful bounded response without an explicit question, so it was not accepted. The required context-free ambiguous-input retry passed; this variability remains a live-device evaluation consideration.
 
 ## Screenshots
 
@@ -101,7 +111,6 @@ The after text-mode screenshot shows a useful answer as the primary output, foll
 
 ## Remaining limitations and gates
 
-- Resolve the local live-verification `401` with an authorized development credential before claiming live model acceptance.
 - Before any production deployment, create a dedicated Companion OpenAI project/service-account key and store it only in Netlify's server-side environment.
 - If that production credential does not exist, stop with `PRODUCTION CREDENTIAL REQUIRED`.
 - Live iPhone microphone, Deepgram, network, and response acceptance remains an operator gate.
@@ -110,4 +119,4 @@ The after text-mode screenshot shows a useful answer as the primary output, foll
 
 ## Verdict
 
-**REMEDIATION REQUIRED**
+**WORKABLE PROTOTYPE READY FOR LIVE-DEVICE ACCEPTANCE**
