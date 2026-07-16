@@ -14,6 +14,7 @@ import {
   type VoiceUnavailableReason
 } from "./companionRuntime";
 import { ResponseEngine, type EngineResponse, type EngineState } from "./responseEngine";
+import { companionResponseProvider } from "./companionResponseProvider";
 import {
   appendSegment,
   createTranscriptBuffer,
@@ -103,7 +104,7 @@ export default function CompanionPrototype() {
   // One session per activation; a new activation gets a new engine.
   function ensureEngine(): ResponseEngine {
     if (engineRef.current && !engineRef.current.isClosed) return engineRef.current;
-    const engine = new ResponseEngine(undefined, {
+    const engine = new ResponseEngine(companionResponseProvider, {
       onState: (state) => setEngineState(state),
       onResponse: (response) => {
         setCurrentResponse(response);
@@ -374,6 +375,15 @@ export default function CompanionPrototype() {
 
           <section className="card-stack">
             <article className="companion-card speak-card">
+              <h2>Answer</h2>
+              <p>{currentResponse?.answer ?? "Companion is listening for your request."}</p>
+              {currentResponse && <small className="live-status-detail">Understood: {currentResponse.understoodIntent}</small>}
+              {currentResponse?.fallback && (
+                <small className="provider-error" role="alert">The response provider failed. Your transcript is preserved; try again.</small>
+              )}
+            </article>
+
+            <article className="companion-card speak-cue-card">
               <h2>Speak</h2>
               <p>{speakLine}</p>
               {currentResponse?.fallback && (
@@ -414,11 +424,13 @@ export default function CompanionPrototype() {
                   <dt>State</dt>
                   <dd>{STATE_LABEL[runtimeState]}</dd>
                   <dt>Intent</dt>
-                  <dd>{activeIntent ? `${activeIntent.word} — ${activeIntent.label}` : "None selected"}</dd>
+                  <dd>{currentResponse?.understoodIntent ?? (activeIntent ? `${activeIntent.word} — ${activeIntent.label}` : "None yet")}</dd>
                   <dt>Started</dt>
                   <dd>{startedAt.toLocaleTimeString()}</dd>
                   <dt>Last event</dt>
                   <dd>{currentResponse?.eventId ?? "None yet"}</dd>
+                  <dt>Response provider</dt>
+                  <dd>{currentResponse ? `${currentResponse.provider} · ${currentResponse.model}` : "None yet"}</dd>
                 </dl>
               </article>
 
@@ -494,7 +506,7 @@ export default function CompanionPrototype() {
         <section className="card-stack">
           <article className="companion-card text-mode-panel">
             <h2>Text Mode</h2>
-            <p>Manual admission fallback. Type a message instead of speaking.</p>
+            <p>Ask Companion directly. Follow-ups stay within this active session.</p>
             <textarea
               ref={textInputRef}
               value={textDraft}
@@ -520,8 +532,11 @@ export default function CompanionPrototype() {
                       <span>{response.receipt?.event.text_chunk ?? ""}</span>
                     </div>
                     <div className="admission-receipt-output">
+                      <p className="text-answer"><strong>Answer</strong> {response.answer}</p>
+                      <p><strong>Understood</strong> {response.understoodIntent}</p>
                       <p><strong>Speak</strong> {response.speak}</p>
                       <p><strong>Steer</strong> {response.steer}</p>
+                      {response.fallback && <p className="provider-error" role="alert">Provider failure — transcript preserved.</p>}
                     </div>
                   </li>
                 ))}
