@@ -1,0 +1,90 @@
+/* Council: neutral, calm, same visual family as the product selector. */
+
+.council-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  background: #f5f3ee;
+  color: #26303a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  padding: 1.5rem;
+}
+
+.council-shell h1 {
+  font-weight: 500;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.council-disclaimer {
+  color: #4c5a66;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 480px;
+}
+
+.council-shell form {
+  display: flex;
+  gap: 0.5rem;
+  width: min(92vw, 480px);
+}
+
+.council-shell input[type="text"] {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #d8d2c6;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.council-shell button {
+  padding: 0.6rem 1rem;
+  border: 1px solid #34544a;
+  border-radius: 8px;
+  background: #34544a;
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.council-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: min(92vw, 480px);
+  justify-content: center;
+}
+
+.council-starters button {
+  background: #ffffff;
+  color: #34544a;
+}
+
+.council-responses {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(92vw, 480px);
+}
+
+.council-response-card {
+  background: #ffffff;
+  border: 1px solid #d8d2c6;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+}
+
+.council-response-card h2 {
+  font-size: 1.1rem;
+  color: #34544a;
+  margin: 0 0 0.25rem;
+}
+
+.council-stance {
+  color: #4c5a66;
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}

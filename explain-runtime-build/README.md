@@ -17,12 +17,15 @@ published preview is not sufficient.
 
 ## Deployment front doors
 
-Four routes share this build (routing in `src/routeGate.ts`):
+Five routes share this build (routing in `src/routeGate.ts`):
 
 - `/` — product selector.
 - `/teacher` — **LDS Teacher Preparation**; see `src/teacherprep/README.md`.
 - `/companion/prototype` — **Companion** prototype (documented below).
 - `/durin` — **Durin Intake** accepted Slice 0 foundation.
+- `/council` — **Council**, a flag-gated, deterministic fixture prototype;
+  see `src/council/README.md`. Not on the product selector, no production or
+  acceptance claim.
 
 All production routes use the canonical Netlify origin above. Other paths
 currently fall through to Companion; they are not additional documented
