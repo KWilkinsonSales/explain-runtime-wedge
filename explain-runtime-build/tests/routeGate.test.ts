@@ -34,4 +34,15 @@ describe("front-door route gate", () => {
     expect(resolveSurface("/durin", true, false)).toBe("companion");
     expect(resolveSurface("/durin", true)).toBe("companion");
   });
+
+  it("routes /council and subpaths to Council only when its flag is on", () => {
+    expect(resolveSurface("/council", true, true, true)).toBe("council");
+    expect(resolveSurface("/council/anything", true, true, true)).toBe("council");
+    // Similar-looking prefixes must not leak into Council.
+    expect(resolveSurface("/councilor", true, true, true)).toBe("companion");
+    // Flag off (and the pre-Council call shapes) keep the old behavior exactly.
+    expect(resolveSurface("/council", true, true, false)).toBe("companion");
+    expect(resolveSurface("/council", true, true)).toBe("companion");
+    expect(resolveSurface("/council", true)).toBe("companion");
+  });
 });
