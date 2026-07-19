@@ -1,0 +1,305 @@
+/* Family History Intelligence OS — evidence-desk layout.
+   Same calm visual family as council/productSelector: paper background,
+   serif headings, restrained accent color, chips for dispositions. */
+
+.fhgi-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background: #f5f3ee;
+  color: #26303a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.fhgi-header {
+  text-align: center;
+  max-width: 640px;
+}
+
+.fhgi-header h1 {
+  font-weight: 500;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.fhgi-subtitle {
+  color: #4c5a66;
+  margin: 0.25rem 0 0;
+}
+
+.fhgi-boundary {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: #6b4a2b;
+  border: 1px solid #d8c9a9;
+  background: #faf6ec;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+}
+
+.fhgi-panel {
+  width: min(96vw, 860px);
+  background: #ffffff;
+  border: 1px solid #d8d2c6;
+  border-radius: 12px;
+  padding: 1rem 1.2rem 1.2rem;
+}
+
+.fhgi-panel h2 {
+  font-size: 1.15rem;
+  color: #34544a;
+  margin: 0 0 0.5rem;
+}
+
+.fhgi-panel h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.fhgi-status {
+  display: inline-block;
+  font-size: 0.85rem;
+  letter-spacing: 0.03em;
+  color: #7a2e2e;
+  border: 1px solid #d9b4b4;
+  background: #faf0f0;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  margin: 0 0 0.75rem;
+}
+
+.fhgi-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.fhgi-facts dt {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4c5a66;
+}
+
+.fhgi-facts dd {
+  margin: 0.1rem 0 0;
+}
+
+.fhgi-summary,
+.fhgi-panel-note {
+  color: #4c5a66;
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+/* Claim matrix: table scrolls inside its wrapper on small screens. */
+.fhgi-table-wrap {
+  overflow-x: auto;
+}
+
+.fhgi-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 720px;
+  font-size: 0.85rem;
+}
+
+.fhgi-table th,
+.fhgi-table td {
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid #e6e1d6;
+  padding: 0.5rem 0.6rem;
+}
+
+.fhgi-table thead th {
+  border-top: none;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4c5a66;
+}
+
+/* Disposition chips: color plus text, never color alone. */
+.fhgi-chip {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+.fhgi-chip-accepted {
+  color: #2c5f3f;
+  background: #edf6f0;
+}
+
+.fhgi-chip-rejected {
+  color: #7a2e2e;
+  background: #faf0f0;
+}
+
+.fhgi-chip-hold {
+  color: #7a5b1e;
+  background: #faf5e8;
+}
+
+.fhgi-chip-conflict,
+.fhgi-chip-duplicate_candidate {
+  color: #6b3a6b;
+  background: #f7f0f7;
+}
+
+.fhgi-chip-private,
+.fhgi-chip-rd_only,
+.fhgi-chip-source_only {
+  color: #44525e;
+  background: #eef1f4;
+}
+
+.fhgi-row-rejected td {
+  color: #6d6d6d;
+}
+
+.fhgi-cards {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.fhgi-card {
+  border: 1px solid #e6e1d6;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+
+.fhgi-card p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
+.fhgi-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.fhgi-card-rejected {
+  background: #fdf9f9;
+}
+
+.fhgi-card-hold {
+  background: #fdfbf4;
+}
+
+.fhgi-block-note,
+.fhgi-requirement {
+  color: #6b4a2b;
+}
+
+.fhgi-gap {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #4c5a66;
+}
+
+.fhgi-say-this {
+  border-left: 3px solid #34544a;
+  padding-left: 0.6rem;
+}
+
+.fhgi-lead-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-family: system-ui, sans-serif;
+  color: #44525e;
+  background: #eef1f4;
+  border: 1px solid #c8d0d8;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.fhgi-artifact-list {
+  columns: 2;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
+.fhgi-legend {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.fhgi-legend li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.fhgi-recon {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-family: system-ui, sans-serif;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid currentColor;
+}
+
+.fhgi-recon-observed_fact {
+  color: #2c5f3f;
+  background: #edf6f0;
+}
+
+.fhgi-recon-likely {
+  color: #375d78;
+  background: #eef4f8;
+}
+
+.fhgi-recon-possible_narrative_fill {
+  color: #7a5b1e;
+  background: #faf5e8;
+}
+
+.fhgi-recon-unknown {
+  color: #44525e;
+  background: #eef1f4;
+}
+
+.fhgi-warning {
+  font-size: 0.9rem;
+  color: #7a2e2e;
+  margin: 0.5rem 0 0;
+}
+
+.fhgi-receipt {
+  overflow-x: auto;
+  background: #26303a;
+  color: #e8ecef;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .fhgi-artifact-list {
+    columns: 1;
+  }
+}
