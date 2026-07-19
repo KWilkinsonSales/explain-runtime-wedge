@@ -45,18 +45,24 @@ function ReconLabelChip({ label }: { label: ReconstructionLabel }) {
   );
 }
 
-export default function FamilyHistoryApp() {
+// The Slice 0 nucleus, extracted so Slice 1 can embed it inside the Person
+// Workspace without duplicating it. `embedded` skips the product header (the
+// shell provides its own) and demotes nothing else — the ledger panels render
+// identically in both contexts.
+export function EvidenceDesk({ embedded = false }: { embedded?: boolean }) {
   const packet = DONNA_JEAN_PACKET;
   const receiptPreview = buildExportReceipt(packet);
 
   return (
-    <main className="fhgi-shell">
+    <>
       {/* 1 — Product header */}
-      <header className="fhgi-header">
-        <h1>Family History Intelligence OS</h1>
-        <p className="fhgi-subtitle">Evidence-first genealogy intelligence</p>
-        <p className="fhgi-boundary">{BOUNDARY_TEXT}</p>
-      </header>
+      {!embedded && (
+        <header className="fhgi-header">
+          <h1>Family History Intelligence OS</h1>
+          <p className="fhgi-subtitle">Evidence-first genealogy intelligence</p>
+          <p className="fhgi-boundary">{BOUNDARY_TEXT}</p>
+        </header>
+      )}
 
       {/* 2 — Person evidence packet */}
       <section className="fhgi-panel" aria-labelledby="fhgi-h-packet">
@@ -230,6 +236,16 @@ export default function FamilyHistoryApp() {
         <h2 id="fhgi-h-receipt">Export Receipt Preview</h2>
         <pre className="fhgi-receipt">{receiptPreview}</pre>
       </section>
+    </>
+  );
+}
+
+// Slice 0 standalone surface, unchanged in content: the full desk with its
+// product header. Slice 1's shell renders this when its own flag is off.
+export default function FamilyHistoryApp() {
+  return (
+    <main className="fhgi-shell">
+      <EvidenceDesk />
     </main>
   );
 }

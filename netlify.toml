@@ -8,5 +8,12 @@
   # the one deliberate switch that turns it on for Netlify builds.
   VITE_FEATURE_FHGI_OS_SLICE0 = "true"
 
+[context.deploy-preview.environment]
+  # Preview-only enable for the Slice 1 Tree + Person Workspace shell, so it
+  # can be visually reviewed on deploy previews. Production inherits only the
+  # [build.environment] block above — Slice 1 stays OFF in production until
+  # its own deliberate switch is added there.
+  VITE_FEATURE_FHGI_OS_SLICE1 = "true"
+
 [functions]
   directory = "netlify/functions"
