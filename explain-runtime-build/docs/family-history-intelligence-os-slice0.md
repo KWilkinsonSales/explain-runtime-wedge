@@ -36,6 +36,10 @@ VITE_FEATURE_FHGI_OS_SLICE0=true npm run dev     # or build / test
 When the flag is off (the default), `/family-history` falls through to the
 Companion surface exactly like any unrecognized path (`src/routeGate.ts`).
 
+Production (Netlify) enables the flag explicitly via `[build.environment]` in
+the repo-root `netlify.toml` — removing that line takes the surface back off
+the live site without any code change.
+
 ## Domain model (`types.ts`)
 
 - `PersonEvidencePacket` — packetId, primaryName, knownNames, dob, birthplace,
