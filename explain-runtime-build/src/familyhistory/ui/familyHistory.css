@@ -303,3 +303,198 @@
     columns: 1;
   }
 }
+
+/* ---- Slice 1: shell, command center, tree, workspace drawers, queue ---- */
+
+.fhgi-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.fhgi-nav button {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #34544a;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #34544a;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.fhgi-nav button.fhgi-nav-active {
+  background: #34544a;
+  color: #ffffff;
+}
+
+.fhgi-footer {
+  color: #4c5a66;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.fhgi-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.6rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.fhgi-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  border: 1px solid #e6e1d6;
+  border-radius: 10px;
+  padding: 0.6rem 0.4rem;
+  background: #faf9f5;
+}
+
+.fhgi-tile-number {
+  font-size: 1.4rem;
+  color: #34544a;
+}
+
+.fhgi-tile-label {
+  font-size: 0.75rem;
+  text-align: center;
+  color: #4c5a66;
+  font-family: system-ui, sans-serif;
+}
+
+.fhgi-list {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.fhgi-list li {
+  margin: 0.3rem 0;
+}
+
+.fhgi-muted {
+  color: #6d6d6d;
+  font-size: 0.85rem;
+}
+
+.fhgi-panel h3 {
+  font-size: 0.95rem;
+  color: #34544a;
+  margin: 0.75rem 0 0.25rem;
+}
+
+/* Tree overview */
+
+.fhgi-overlay-toggles {
+  border: 1px solid #e6e1d6;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.85rem;
+  font-family: system-ui, sans-serif;
+}
+
+.fhgi-overlay-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.fhgi-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+.fhgi-tree-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+
+.fhgi-tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  border: 1px solid #d8d2c6;
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #26303a;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fhgi-health-partial {
+  border-left-color: #7a5b1e;
+}
+
+.fhgi-health-anchored {
+  border-left-color: #2c5f3f;
+}
+
+.fhgi-health-unsourced {
+  border-left-color: #9aa4ad;
+  background: #f6f6f4;
+}
+
+.fhgi-tree-name {
+  font-weight: 600;
+}
+
+.fhgi-tree-lifespan,
+.fhgi-tree-opportunity {
+  color: #4c5a66;
+  font-size: 0.78rem;
+}
+
+.fhgi-overlay-anchored {
+  color: #2c5f3f;
+  background: #edf6f0;
+}
+
+.fhgi-overlay-partial {
+  color: #7a5b1e;
+  background: #faf5e8;
+}
+
+.fhgi-overlay-unsourced {
+  color: #44525e;
+  background: #eef1f4;
+}
+
+/* Person workspace drawers */
+
+.fhgi-drawer {
+  border: 1px solid #e6e1d6;
+  border-radius: 10px;
+  margin: 0.5rem 0;
+  background: #faf9f5;
+}
+
+.fhgi-drawer summary {
+  cursor: pointer;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.95rem;
+  color: #34544a;
+}
+
+.fhgi-drawer-body {
+  padding: 0.2rem 0.9rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fhgi-queue-group {
+  margin-top: 0.5rem;
+}
