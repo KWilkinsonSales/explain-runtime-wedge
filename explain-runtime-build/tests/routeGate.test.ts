@@ -35,6 +35,16 @@ describe("front-door route gate", () => {
     expect(resolveSurface("/durin", true)).toBe("companion");
   });
 
+  it("routes /family-history to Family History OS only when its flag is on", () => {
+    expect(resolveSurface("/family-history", true, true, true, true)).toBe("familyHistory");
+    expect(resolveSurface("/family-history/desk", true, true, true, true)).toBe("familyHistory");
+    // Similar-looking prefixes must not leak into the surface.
+    expect(resolveSurface("/family-historian", true, true, true, true)).toBe("companion");
+    // Flag off (and the pre-slice call shapes) keep the old behavior exactly.
+    expect(resolveSurface("/family-history", true, true, true, false)).toBe("companion");
+    expect(resolveSurface("/family-history", true, true, true)).toBe("companion");
+  });
+
   it("routes /council and subpaths to Council only when its flag is on", () => {
     expect(resolveSurface("/council", true, true, true)).toBe("council");
     expect(resolveSurface("/council/anything", true, true, true)).toBe("council");
