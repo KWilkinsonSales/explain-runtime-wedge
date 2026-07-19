@@ -2,5 +2,11 @@
   command = "cd explain-runtime-build && pnpm install --ignore-workspace && npm run build"
   publish = "explain-runtime-build/dist"
 
+[build.environment]
+  # Explicit production enable for the Family History Intelligence OS Slice 0
+  # surface (/family-history). The flag still defaults OFF in code; this is
+  # the one deliberate switch that turns it on for Netlify builds.
+  VITE_FEATURE_FHGI_OS_SLICE0 = "true"
+
 [functions]
   directory = "netlify/functions"
